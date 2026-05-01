@@ -9,19 +9,21 @@ techlog-hub/
   apps/
     web/   # Next.js + TypeScript
     api/   # Spring Boot
-  docs/
-    plan/
-    troubleshooting/
 ```
+
+문서는 GitHub Wiki에서 관리한다.
+
+- Wiki: https://github.com/TechLog-Hub/TlogHub/wiki
+- 문서 정책: https://github.com/TechLog-Hub/TlogHub/wiki/documentation-policy
 
 ## 현재 상태
 
 - `apps/web`
   검색과 토픽 필터가 가능한 Next.js 데모 큐레이션 화면
 - `apps/api`
-  샘플 큐레이션 데이터를 반환하는 Spring Boot API 골격
-- `docs/`
-  설계, 스택 선택, 로컬 실행, 계획 문서
+  Flyway/JPA 기반 공개 조회, 구독, 관리자, RSS/AI Batch Worker, 검색 추상화가 포함된 Spring Boot API
+- Wiki
+  요구사항, 화면 설계, 백엔드/API/Batch/Search 테크스팩, 계획 문서의 단일 문서 원천
 
 ## 실행
 
@@ -59,6 +61,6 @@ cd apps/api
 
 ## 다음 단계
 
-1. RSS 수집기와 저장소를 붙여 정적 데이터를 실제 수집 데이터로 교체한다.
-2. `apps/web`가 `apps/api`를 조회하도록 연동한다.
-3. 카테고리, 난이도, 팀 관심도 기반 개인화 큐레이션을 설계한다.
+1. API 서버 hardening 테스트와 운영 보안 정책을 보강한다.
+2. Batch Worker의 동시 실행 방지, 재시작, 수집 fixture 테스트를 구현한다.
+3. Elasticsearch provider parity, reindex, alias 전환 전략을 구현한다.

@@ -15,6 +15,10 @@ dist
 dist-ssr
 *.local
 
+# Project documentation lives in GitHub Wiki.
+docs/
+review/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
