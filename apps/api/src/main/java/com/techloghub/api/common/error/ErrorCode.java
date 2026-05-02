@@ -12,4 +12,8 @@ public interface ErrorCode {
 	String code();
 
 	String message();
+
+	default ErrorLogLevel logLevel() {
+		return httpStatus().is5xxServerError() ? ErrorLogLevel.ERROR : ErrorLogLevel.INFO;
+	}
 }

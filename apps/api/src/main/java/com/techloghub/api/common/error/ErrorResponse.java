@@ -15,17 +15,30 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public record ErrorResponse(
 	String code,
 	String message,
-	List<FieldErrorResponse> errors
+	List<FieldErrorResponse> errors,
+	String traceId
 ) {
+	public ErrorResponse {
+		errors = List.copyOf(errors == null ? List.of() : errors);
+	}
+
 	public static ErrorResponse of(ErrorCode errorCode) {
-		return new ErrorResponse(errorCode.code(), errorCode.message(), List.of());
+		return new ErrorResponse(errorCode.code(), errorCode.message(), List.of(), null);
 	}
 
 	public static ErrorResponse of(ErrorCode errorCode, String message) {
-		return new ErrorResponse(errorCode.code(), message, List.of());
+		return new ErrorResponse(errorCode.code(), message, List.of(), null);
 	}
 
 	public static ErrorResponse of(ErrorCode errorCode, List<FieldErrorResponse> errors) {
-		return new ErrorResponse(errorCode.code(), errorCode.message(), List.copyOf(errors));
+		return new ErrorResponse(errorCode.code(), errorCode.message(), errors, null);
+	}
+
+	public static ErrorResponse of(ErrorCode errorCode, String message, String traceId) {
+		return new ErrorResponse(errorCode.code(), message, List.of(), traceId);
+	}
+
+	public static ErrorResponse of(ErrorCode errorCode, List<FieldErrorResponse> errors, String traceId) {
+		return new ErrorResponse(errorCode.code(), errorCode.message(), errors, traceId);
 	}
 }

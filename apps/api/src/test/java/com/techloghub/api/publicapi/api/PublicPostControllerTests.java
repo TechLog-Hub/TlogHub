@@ -91,6 +91,14 @@ class PublicPostControllerTests {
 	}
 
 	@Test
+	void returnsBadRequestWhenQueryParameterTypeIsInvalid() throws Exception {
+		mockMvc.perform(get("/api/v1/public/posts").param("page", "not-number"))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.code").value("INVALID_REQUEST"))
+			.andExpect(jsonPath("$.errors[0].field").value("page"));
+	}
+
+	@Test
 	void getsPostDetail() throws Exception {
 		given(publicPostQueryService.getPost("toss-spring")).willReturn(new PublicPostDetailResponse(
 			1L,

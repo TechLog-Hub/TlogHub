@@ -5,6 +5,8 @@ import java.util.Locale;
 
 import com.techloghub.api.common.error.BusinessException;
 import com.techloghub.api.common.error.CommonErrorCode;
+import com.techloghub.api.common.util.CollectionSupport;
+import com.techloghub.api.common.util.StringNormalizer;
 import com.techloghub.api.publicapi.application.PublicPostQuery;
 import com.techloghub.api.publicapi.application.PublicPostSort;
 
@@ -44,7 +46,7 @@ public record PublicPostSearchRequest(
 		List<String> tagSlugs = normalizeValues(tag, "tag");
 
 		return new PublicPostQuery(
-			blankToNull(q),
+			StringNormalizer.trimToNull(q),
 			companySlugs,
 			jobCodes,
 			tagSlugs,
@@ -67,11 +69,11 @@ public record PublicPostSearchRequest(
 	}
 
 	private List<String> normalizeValues(List<String> values, String fieldName) {
-		if (values == null || values.isEmpty()) {
+		if (CollectionSupport.isNullOrEmpty(values)) {
 			return List.of();
 		}
 		List<String> normalizedValues = values.stream()
-			.map(this::blankToNull)
+			.map(StringNormalizer::trimToNull)
 			.filter(value -> value != null)
 			.distinct()
 			.toList();
@@ -85,7 +87,7 @@ public record PublicPostSearchRequest(
 	}
 
 	private PublicPostSort parseSort(String value) {
-		String normalizedValue = blankToNull(value);
+		String normalizedValue = StringNormalizer.trimToNull(value);
 		String sortValue = normalizedValue == null ? DEFAULT_SORT : normalizedValue.toLowerCase(Locale.ROOT);
 		return switch (sortValue) {
 			case "latest" -> PublicPostSort.LATEST;
@@ -95,9 +97,5 @@ public record PublicPostSearchRequest(
 				"sort는 latest 또는 relevance만 사용할 수 있습니다."
 			);
 		};
-	}
-
-	private String blankToNull(String value) {
-		return value == null || value.isBlank() ? null : value.trim();
 	}
 }
