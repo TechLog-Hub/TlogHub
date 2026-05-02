@@ -17,6 +17,7 @@ import org.springframework.test.context.ActiveProfiles;
 import com.techloghub.api.admin.domain.AdminAuditLog;
 import com.techloghub.api.admin.domain.AdminUser;
 import com.techloghub.api.common.config.JpaAuditingConfiguration;
+import com.techloghub.api.common.config.QueryDslConfiguration;
 import com.techloghub.api.subscription.domain.CompanySubscription;
 import com.techloghub.api.subscription.domain.NotificationEvent;
 import com.techloghub.api.subscription.domain.Subscriber;
@@ -24,7 +25,7 @@ import com.techloghub.api.subscription.domain.SubscriptionVerificationRequest;
 
 @ActiveProfiles("test")
 @DataJpaTest
-@Import(JpaAuditingConfiguration.class)
+@Import({JpaAuditingConfiguration.class, QueryDslConfiguration.class})
 class DomainEntityMappingTests {
 
 	@Autowired
