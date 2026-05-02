@@ -12,4 +12,11 @@ public record PublicPostSummaryResponse(
 	String headline,
 	List<String> bullets
 ) {
+	public PublicPostSummaryResponse {
+		bullets = List.copyOf(bullets == null ? List.of() : bullets);
+	}
+
+	public static PublicPostSummaryResponse of(String headline, List<String> bullets) {
+		return new PublicPostSummaryResponse(headline, bullets);
+	}
 }

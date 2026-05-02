@@ -3,6 +3,8 @@ package com.techloghub.api.publicapi.dto;
 import java.time.Instant;
 import java.util.List;
 
+import com.techloghub.api.content.repository.ArchivedPostListQueryDto;
+
 /**
  * 공개 글 목록 항목 응답이다.
  *
@@ -29,4 +31,29 @@ public record PublicPostListItemResponse(
 	String summaryPreview,
 	String originUrl
 ) {
+	public PublicPostListItemResponse {
+		jobCategories = List.copyOf(jobCategories == null ? List.of() : jobCategories);
+		topicTags = List.copyOf(topicTags == null ? List.of() : topicTags);
+	}
+
+	public static PublicPostListItemResponse of(
+		ArchivedPostListQueryDto post,
+		List<String> jobCategories,
+		List<String> topicTags,
+		String summaryState,
+		String summaryPreview
+	) {
+		return new PublicPostListItemResponse(
+			post.id(),
+			post.slug(),
+			post.title(),
+			PublicCompanySummaryResponse.of(post.companySlug(), post.companyNameKo()),
+			post.publishedAt(),
+			jobCategories,
+			topicTags,
+			summaryState,
+			summaryPreview,
+			post.originUrl()
+		);
+	}
 }

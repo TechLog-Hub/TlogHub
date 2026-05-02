@@ -14,4 +14,17 @@ public record PublicFilterMetadataResponse(
 	List<PublicJobCategoryFilterResponse> jobs,
 	List<PublicTopicTagFilterResponse> tags
 ) {
+	public PublicFilterMetadataResponse {
+		companies = List.copyOf(companies == null ? List.of() : companies);
+		jobs = List.copyOf(jobs == null ? List.of() : jobs);
+		tags = List.copyOf(tags == null ? List.of() : tags);
+	}
+
+	public static PublicFilterMetadataResponse of(
+		List<PublicCompanyFilterResponse> companies,
+		List<PublicJobCategoryFilterResponse> jobs,
+		List<PublicTopicTagFilterResponse> tags
+	) {
+		return new PublicFilterMetadataResponse(companies, jobs, tags);
+	}
 }

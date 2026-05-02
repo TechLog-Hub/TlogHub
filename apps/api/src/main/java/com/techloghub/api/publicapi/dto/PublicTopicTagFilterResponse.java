@@ -1,5 +1,7 @@
 package com.techloghub.api.publicapi.dto;
 
+import com.techloghub.api.content.domain.TopicTag;
+
 /**
  * 공개 필터의 주제 태그 옵션이다.
  *
@@ -12,4 +14,7 @@ public record PublicTopicTagFilterResponse(
 	String label,
 	long count
 ) {
+	public static PublicTopicTagFilterResponse of(TopicTag tag, long count) {
+		return new PublicTopicTagFilterResponse(tag.getSlug(), tag.getLabel(), count);
+	}
 }

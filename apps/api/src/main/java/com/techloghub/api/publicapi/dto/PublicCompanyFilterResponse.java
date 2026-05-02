@@ -1,5 +1,7 @@
 package com.techloghub.api.publicapi.dto;
 
+import com.techloghub.api.content.domain.Company;
+
 /**
  * 공개 필터의 기업 옵션이다.
  *
@@ -12,4 +14,7 @@ public record PublicCompanyFilterResponse(
 	String name,
 	long count
 ) {
+	public static PublicCompanyFilterResponse of(Company company, long count) {
+		return new PublicCompanyFilterResponse(company.getSlug(), company.getNameKo(), count);
+	}
 }

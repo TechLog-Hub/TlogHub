@@ -56,13 +56,13 @@ public record PublicPostSearchRequest(
 
 	private void validatePage(int value) {
 		if (value < DEFAULT_PAGE) {
-			throw new BusinessException(CommonErrorCode.INVALID_REQUEST, "page must be greater than or equal to 0");
+			throw new BusinessException(CommonErrorCode.INVALID_REQUEST, "page는 0 이상이어야 합니다.");
 		}
 	}
 
 	private void validateSize(int value) {
 		if (value < 1 || value > MAX_SIZE) {
-			throw new BusinessException(CommonErrorCode.INVALID_REQUEST, "size must be between 1 and " + MAX_SIZE);
+			throw new BusinessException(CommonErrorCode.INVALID_REQUEST, "size는 1 이상 " + MAX_SIZE + " 이하여야 합니다.");
 		}
 	}
 
@@ -78,7 +78,7 @@ public record PublicPostSearchRequest(
 		if (normalizedValues.size() > MAX_FILTER_VALUE_COUNT) {
 			throw new BusinessException(
 				CommonErrorCode.INVALID_REQUEST,
-				fieldName + " filter count must be less than or equal to " + MAX_FILTER_VALUE_COUNT
+				fieldName + " 필터는 최대 " + MAX_FILTER_VALUE_COUNT + "개까지 선택할 수 있습니다."
 			);
 		}
 		return normalizedValues;
@@ -92,7 +92,7 @@ public record PublicPostSearchRequest(
 			case "relevance" -> PublicPostSort.RELEVANCE;
 			default -> throw new BusinessException(
 				CommonErrorCode.INVALID_REQUEST,
-				"sort must be one of latest, relevance"
+				"sort는 latest 또는 relevance만 사용할 수 있습니다."
 			);
 		};
 	}

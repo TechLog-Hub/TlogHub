@@ -87,7 +87,7 @@ class PublicPostControllerTests {
 		mockMvc.perform(get("/api/v1/public/posts").param("size", "101"))
 			.andExpect(status().isBadRequest())
 			.andExpect(jsonPath("$.code").value("INVALID_REQUEST"))
-			.andExpect(jsonPath("$.message").value("size must be between 1 and 100"));
+			.andExpect(jsonPath("$.message").value("size는 1 이상 100 이하여야 합니다."));
 	}
 
 	@Test

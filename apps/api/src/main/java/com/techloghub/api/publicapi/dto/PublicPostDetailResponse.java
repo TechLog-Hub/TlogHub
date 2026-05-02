@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.techloghub.api.content.domain.ArchivedPost;
 
 /**
  * 공개 글 상세 응답이다.
@@ -36,4 +37,32 @@ public record PublicPostDetailResponse(
 	String originUrl,
 	String aiNotice
 ) {
+	public PublicPostDetailResponse {
+		jobCategories = List.copyOf(jobCategories == null ? List.of() : jobCategories);
+		topicTags = List.copyOf(topicTags == null ? List.of() : topicTags);
+	}
+
+	public static PublicPostDetailResponse of(
+		ArchivedPost post,
+		List<String> jobCategories,
+		List<String> topicTags,
+		String summaryState,
+		PublicPostSummaryResponse summary,
+		String aiNotice
+	) {
+		return new PublicPostDetailResponse(
+			post.getId(),
+			post.getSlug(),
+			post.getTitle(),
+			PublicCompanySummaryResponse.from(post.getCompany()),
+			PublicSourceSummaryResponse.from(post.getSourceBlog()),
+			post.getPublishedAt(),
+			jobCategories,
+			topicTags,
+			summaryState,
+			summary,
+			post.getOriginUrl(),
+			aiNotice
+		);
+	}
 }

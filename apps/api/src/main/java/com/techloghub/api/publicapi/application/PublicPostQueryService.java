@@ -22,7 +22,6 @@ import com.techloghub.api.common.dto.PageResponse;
 import com.techloghub.api.common.error.BusinessException;
 import com.techloghub.api.content.domain.AiSummary;
 import com.techloghub.api.content.domain.ArchivedPost;
-import com.techloghub.api.content.domain.Company;
 import com.techloghub.api.content.domain.CompanyStatus;
 import com.techloghub.api.content.domain.SummaryState;
 import com.techloghub.api.content.domain.VisibilityState;
@@ -37,13 +36,11 @@ import com.techloghub.api.content.repository.FilterCountQueryDto;
 import com.techloghub.api.content.repository.JobCategoryRepository;
 import com.techloghub.api.content.repository.TopicTagRepository;
 import com.techloghub.api.publicapi.dto.PublicCompanyFilterResponse;
-import com.techloghub.api.publicapi.dto.PublicCompanySummaryResponse;
 import com.techloghub.api.publicapi.dto.PublicFilterMetadataResponse;
 import com.techloghub.api.publicapi.dto.PublicJobCategoryFilterResponse;
 import com.techloghub.api.publicapi.dto.PublicPostDetailResponse;
 import com.techloghub.api.publicapi.dto.PublicPostListItemResponse;
 import com.techloghub.api.publicapi.dto.PublicPostSummaryResponse;
-import com.techloghub.api.publicapi.dto.PublicSourceSummaryResponse;
 import com.techloghub.api.publicapi.dto.PublicTopicTagFilterResponse;
 import com.techloghub.api.publicapi.error.PublicApiErrorCode;
 
@@ -118,18 +115,12 @@ public class PublicPostQueryService {
 			.sorted()
 			.toList();
 
-		return new PublicPostDetailResponse(
-			post.getId(),
-			post.getSlug(),
-			post.getTitle(),
-			new PublicCompanySummaryResponse(post.getCompany().getSlug(), post.getCompany().getNameKo()),
-			new PublicSourceSummaryResponse(post.getSourceBlog().getName(), post.getSourceBlog().getHomepageUrl()),
-			post.getPublishedAt(),
+		return PublicPostDetailResponse.of(
+			post,
 			jobCategoryCodes,
 			topicTagSlugs,
 			summaryState(summary),
 			summary.flatMap(this::summaryResponse).orElse(null),
-			post.getOriginUrl(),
 			AI_NOTICE
 		);
 	}
@@ -140,25 +131,22 @@ public class PublicPostQueryService {
 		Map<String, Long> jobCountMap = countMap(archivedPostRepository.countPublishedPostsByJobCategory());
 		Map<String, Long> tagCountMap = countMap(archivedPostRepository.countPublishedPostsByTopicTag());
 
-		return new PublicFilterMetadataResponse(
+		return PublicFilterMetadataResponse.of(
 			companyRepository.findByStatusOrderByNameKoAsc(CompanyStatus.ACTIVE).stream()
-				.map(company -> new PublicCompanyFilterResponse(
-					company.getSlug(),
-					company.getNameKo(),
+				.map(company -> PublicCompanyFilterResponse.of(
+					company,
 					companyCountMap.getOrDefault(company.getSlug(), 0L)
 				))
 				.toList(),
 			jobCategoryRepository.findByActiveTrueOrderByDisplayOrderAsc().stream()
-				.map(jobCategory -> new PublicJobCategoryFilterResponse(
-					jobCategory.getCode(),
-					jobCategory.getLabelKo(),
+				.map(jobCategory -> PublicJobCategoryFilterResponse.of(
+					jobCategory,
 					jobCountMap.getOrDefault(jobCategory.getCode(), 0L)
 				))
 				.toList(),
 			topicTagRepository.findByActiveTrueOrderByLabelAsc().stream()
-				.map(tag -> new PublicTopicTagFilterResponse(
-					tag.getSlug(),
-					tag.getLabel(),
+				.map(tag -> PublicTopicTagFilterResponse.of(
+					tag,
 					tagCountMap.getOrDefault(tag.getSlug(), 0L)
 				))
 				.toList()
@@ -171,17 +159,12 @@ public class PublicPostQueryService {
 		List<String> topicTags,
 		Optional<AiSummary> summary
 	) {
-		return new PublicPostListItemResponse(
-			post.id(),
-			post.slug(),
-			post.title(),
-			new PublicCompanySummaryResponse(post.companySlug(), post.companyNameKo()),
-			post.publishedAt(),
+		return PublicPostListItemResponse.of(
+			post,
 			jobCategories,
 			topicTags,
 			summaryState(summary),
-			summaryPreview(summary),
-			post.originUrl()
+			summaryPreview(summary)
 		);
 	}
 
@@ -250,7 +233,7 @@ public class PublicPostQueryService {
 		if (summary.getSummaryState() != SummaryState.READY) {
 			return Optional.empty();
 		}
-		return Optional.of(new PublicPostSummaryResponse(
+		return Optional.of(PublicPostSummaryResponse.of(
 			summary.getHeadline(),
 			parseBullets(summary)
 		));

@@ -1,5 +1,7 @@
 package com.techloghub.api.publicapi.dto;
 
+import com.techloghub.api.content.domain.JobCategory;
+
 /**
  * 공개 필터의 직군 옵션이다.
  *
@@ -12,4 +14,7 @@ public record PublicJobCategoryFilterResponse(
 	String label,
 	long count
 ) {
+	public static PublicJobCategoryFilterResponse of(JobCategory jobCategory, long count) {
+		return new PublicJobCategoryFilterResponse(jobCategory.getCode(), jobCategory.getLabelKo(), count);
+	}
 }
