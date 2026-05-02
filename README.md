@@ -38,6 +38,7 @@ npm run validate:repo
 ```
 
 Husky는 local Git hook을 설치한다. CI와 production install에서는 `HUSKY=0`을 사용한다.
+macOS와 Windows에서 동일하게 동작하도록 `.gitattributes`로 Husky hook과 Node.js 검증 스크립트의 LF line ending을 고정한다.
 
 ### Web
 
