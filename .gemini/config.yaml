@@ -1,0 +1,16 @@
+have_fun: false
+memory_config:
+  disabled: false
+code_review:
+  disable: false
+  comment_severity_threshold: HIGH
+  max_review_comments: 8
+  pull_request_opened:
+    help: false
+    summary: true
+    code_review: true
+    include_drafts: false
+ignore_patterns:
+  - ".github/workflows/**"
+  - "검토-필요/**"
+  - "Tech Blog Design System.zip"
