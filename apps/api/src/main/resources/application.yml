@@ -1,6 +1,16 @@
 spring:
   application:
     name: tlog-api
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/techlog_hub}
+    username: ${SPRING_DATASOURCE_USERNAME:techlog}
+    password: ${SPRING_DATASOURCE_PASSWORD:techlog}
+  flyway:
+    enabled: true
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
 
 management:
   endpoints:
