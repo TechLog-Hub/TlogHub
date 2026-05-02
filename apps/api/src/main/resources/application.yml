@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: tlog-api
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
