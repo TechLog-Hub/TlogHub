@@ -47,7 +47,8 @@ function isAncestor(ancestor, descendant) {
 }
 
 function validateBranchContext() {
-  const defaultBranch = 'main';
+  const defaultBranch = 'develop';
+  const productionBranch = 'main';
   const integrationBranch = 'develop';
   const currentBranch = git(['branch', '--show-current']).trim();
 
@@ -55,7 +56,7 @@ function validateBranchContext() {
     fail('current branch is empty or detached');
   }
 
-  if ([defaultBranch, integrationBranch, 'master'].includes(currentBranch)) {
+  if ([defaultBranch, productionBranch, integrationBranch, 'master'].includes(currentBranch)) {
     fail(`do not commit directly on protected branch: ${currentBranch}`);
   }
 
@@ -64,6 +65,7 @@ function validateBranchContext() {
   }
 
   assertRemoteBranch(defaultBranch);
+  assertRemoteBranch(productionBranch);
   assertRemoteBranch(integrationBranch);
 
   const originHead = gitResult(['symbolic-ref', '--short', 'refs/remotes/origin/HEAD']);
@@ -72,7 +74,7 @@ function validateBranchContext() {
   }
 
   const [branchType] = currentBranch.split('/');
-  const expectedBase = branchType === 'hotfix' ? defaultBranch : integrationBranch;
+  const expectedBase = branchType === 'hotfix' ? productionBranch : integrationBranch;
   if (!isAncestor(`origin/${expectedBase}`, 'HEAD')) {
     fail(`current branch must contain origin/${expectedBase}: ${currentBranch}`);
   }
