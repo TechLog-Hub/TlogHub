@@ -21,6 +21,14 @@ public interface AiSummaryRepository extends JpaRepository<AiSummary, Long> {
 	Optional<AiSummary> findByArchivedPost_IdAndCurrentTrue(Long archivedPostId);
 
 	/**
+	 * 여러 글의 현재 요약을 조회한다.
+	 *
+	 * @param archivedPostIds 아카이브 글 ID 목록
+	 * @return 현재 요약 목록
+	 */
+	List<AiSummary> findByArchivedPost_IdInAndCurrentTrue(List<Long> archivedPostIds);
+
+	/**
 	 * 글의 요약 이력을 최신 버전순으로 조회한다.
 	 *
 	 * @param archivedPostId 아카이브 글 ID

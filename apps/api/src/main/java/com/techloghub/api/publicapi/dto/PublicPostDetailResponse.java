@@ -1,0 +1,39 @@
+package com.techloghub.api.publicapi.dto;
+
+import java.time.Instant;
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+/**
+ * 공개 글 상세 응답이다.
+ *
+ * @param id 글 ID
+ * @param slug 글 slug
+ * @param title 글 제목
+ * @param company 기업 요약
+ * @param source 소스 블로그 요약
+ * @param publishedAt 원문 게시 시각
+ * @param jobCategories 직군 코드 목록
+ * @param topicTags 주제 태그 slug 목록
+ * @param summaryState 요약 상태
+ * @param summary AI 요약
+ * @param originUrl 원문 URL
+ * @param aiNotice AI 요약 안내 문구
+ */
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public record PublicPostDetailResponse(
+	Long id,
+	String slug,
+	String title,
+	PublicCompanySummaryResponse company,
+	PublicSourceSummaryResponse source,
+	Instant publishedAt,
+	List<String> jobCategories,
+	List<String> topicTags,
+	String summaryState,
+	PublicPostSummaryResponse summary,
+	String originUrl,
+	String aiNotice
+) {
+}
