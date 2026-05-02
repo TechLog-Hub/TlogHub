@@ -36,7 +36,7 @@ if (/^(Merge|Revert|fixup!|squash!)/.test(subject)) {
 
 const gitmoji = [...gitmojiByType.values()].find((emoji) => subject.startsWith(`${emoji} `));
 const subjectWithoutGitmoji = gitmoji ? subject.slice(gitmoji.length + 1) : subject;
-const subjectPattern = new RegExp(`^(${allowedTypes.join('|')})(\\([a-z0-9-]+\\))?: .+$`);
+const subjectPattern = new RegExp(`^(${allowedTypes.join('|')})(\\([a-z0-9-]+\\))?: (.+)$`);
 const subjectMatch = subjectWithoutGitmoji.match(subjectPattern);
 
 if (!gitmoji) {
@@ -47,11 +47,15 @@ if (!subjectMatch) {
   fail(`commit subject must match: <gitmoji> <type>(optional-scope): <한국어 요약>\nactual: ${subject}`);
 }
 
-const [, type] = subjectMatch;
+const [, type, , description] = subjectMatch;
 const expectedGitmoji = gitmojiByType.get(type);
 
 if (gitmoji !== expectedGitmoji) {
   fail(`commit subject gitmoji must match type "${type}": expected "${expectedGitmoji}"\nactual: ${subject}`);
+}
+
+if (/(한다|했다|된다|되다|합니다|했습니다|하였다)$/.test(description.trim())) {
+  fail(`commit subject summary must use a Korean noun phrase, not a declarative sentence\nexample: 🔧 chore(repo): 허스키 검증 규칙 추가\nactual: ${subject}`);
 }
 
 if (!/[가-힣]/.test(subject)) {
