@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -23,9 +24,7 @@ import com.techloghub.api.content.domain.AiSummary;
 import com.techloghub.api.content.domain.ArchivedPost;
 import com.techloghub.api.content.domain.Company;
 import com.techloghub.api.content.domain.CompanyStatus;
-import com.techloghub.api.content.domain.JobCategory;
 import com.techloghub.api.content.domain.SummaryState;
-import com.techloghub.api.content.domain.TopicTag;
 import com.techloghub.api.content.domain.VisibilityState;
 import com.techloghub.api.content.repository.AiSummaryRepository;
 import com.techloghub.api.content.repository.ArchivedPostJobCategoryQueryDto;
@@ -63,6 +62,7 @@ public class PublicPostQueryService {
 	private static final String SUMMARY_PENDING_PREVIEW = "AI 요약을 준비 중입니다.";
 	private static final String SUMMARY_FAILED_PREVIEW = "AI 요약을 다시 준비 중입니다.";
 	private static final String AI_NOTICE = "AI가 원문을 바탕으로 생성한 요약입니다.";
+	private static final String FILTER_METADATA_CACHE = "public-filter-metadata";
 	private static final TypeReference<List<String>> STRING_LIST_TYPE = new TypeReference<>() {
 	};
 
@@ -107,6 +107,16 @@ public class PublicPostQueryService {
 			.findDetailedBySlugAndVisibilityState(slug, VisibilityState.PUBLISHED)
 			.orElseThrow(() -> new BusinessException(PublicApiErrorCode.PUBLIC_POST_NOT_FOUND));
 		Optional<AiSummary> summary = aiSummaryRepository.findByArchivedPost_IdAndCurrentTrue(post.getId());
+		List<String> jobCategoryCodes = jobCategoryMap(List.of(post.getId()))
+			.getOrDefault(post.getId(), List.of())
+			.stream()
+			.sorted()
+			.toList();
+		List<String> topicTagSlugs = topicTagMap(List.of(post.getId()))
+			.getOrDefault(post.getId(), List.of())
+			.stream()
+			.sorted()
+			.toList();
 
 		return new PublicPostDetailResponse(
 			post.getId(),
@@ -115,14 +125,8 @@ public class PublicPostQueryService {
 			new PublicCompanySummaryResponse(post.getCompany().getSlug(), post.getCompany().getNameKo()),
 			new PublicSourceSummaryResponse(post.getSourceBlog().getName(), post.getSourceBlog().getHomepageUrl()),
 			post.getPublishedAt(),
-			post.getJobCategories().stream()
-				.map(JobCategory::getCode)
-				.sorted()
-				.toList(),
-			post.getTopicTags().stream()
-				.map(TopicTag::getSlug)
-				.sorted()
-				.toList(),
+			jobCategoryCodes,
+			topicTagSlugs,
 			summaryState(summary),
 			summary.flatMap(this::summaryResponse).orElse(null),
 			post.getOriginUrl(),
@@ -130,6 +134,7 @@ public class PublicPostQueryService {
 		);
 	}
 
+	@Cacheable(cacheNames = FILTER_METADATA_CACHE)
 	public PublicFilterMetadataResponse getFilters() {
 		Map<String, Long> companyCountMap = countMap(archivedPostRepository.countPublishedPostsByCompany());
 		Map<String, Long> jobCountMap = countMap(archivedPostRepository.countPublishedPostsByJobCategory());

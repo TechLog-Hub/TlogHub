@@ -1,6 +1,9 @@
 spring:
   application:
     name: tlog-api
+  cache:
+    cache-names:
+      - public-filter-metadata
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/techlog_hub}
     username: ${SPRING_DATASOURCE_USERNAME:techlog}
