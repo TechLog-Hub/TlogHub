@@ -29,7 +29,7 @@ public interface ArchivedPostRepository extends JpaRepository<ArchivedPost, Long
 	 * @param visibilityState 공개 상태
 	 * @return 상세 조회용 글
 	 */
-	@EntityGraph(attributePaths = {"company", "sourceBlog", "jobCategories", "topicTags"})
+	@EntityGraph(attributePaths = {"company", "sourceBlog"})
 	Optional<ArchivedPost> findDetailedBySlugAndVisibilityState(String slug, VisibilityState visibilityState);
 
 	/**

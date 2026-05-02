@@ -47,7 +47,7 @@ import jakarta.persistence.JoinTable;
 	indexes = {
 		@Index(name = "idx_archived_post_company_published", columnList = "company_id, published_at"),
 		@Index(name = "idx_archived_post_source_blog_id", columnList = "source_blog_id"),
-		@Index(name = "idx_archived_post_visibility_state", columnList = "visibility_state"),
+		@Index(name = "idx_archived_post_visibility_published", columnList = "visibility_state, published_at, id"),
 		@Index(name = "idx_archived_post_processing_state", columnList = "processing_state")
 	}
 )

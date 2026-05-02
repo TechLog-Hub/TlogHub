@@ -38,7 +38,7 @@ import jakarta.persistence.UniqueConstraint;
 		@UniqueConstraint(name = "uk_notification_event_subscriber_post", columnNames = {"subscriber_id", "archived_post_id"})
 	},
 	indexes = {
-		@Index(name = "idx_notification_event_status", columnList = "status")
+		@Index(name = "idx_notification_event_status_requested", columnList = "status, requested_at")
 	}
 )
 public class NotificationEvent extends BaseEntity {

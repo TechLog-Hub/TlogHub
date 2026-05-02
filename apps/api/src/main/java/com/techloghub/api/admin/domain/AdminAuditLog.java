@@ -31,7 +31,7 @@ import jakarta.persistence.Table;
 	name = "admin_audit_log",
 	indexes = {
 		@Index(name = "idx_admin_audit_log_admin_user_id", columnList = "admin_user_id"),
-		@Index(name = "idx_admin_audit_log_target", columnList = "target_type, target_id")
+		@Index(name = "idx_admin_audit_log_target_created", columnList = "target_type, target_id, created_at")
 	}
 )
 public class AdminAuditLog extends BaseEntity {

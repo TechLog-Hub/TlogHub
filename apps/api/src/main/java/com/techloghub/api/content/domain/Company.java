@@ -17,6 +17,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
@@ -29,6 +30,9 @@ import jakarta.persistence.UniqueConstraint;
 	name = "company",
 	uniqueConstraints = {
 		@UniqueConstraint(name = "uk_company_slug", columnNames = "slug")
+	},
+	indexes = {
+		@Index(name = "idx_company_status_name_ko", columnList = "status, name_ko")
 	}
 )
 public class Company extends BaseEntity {

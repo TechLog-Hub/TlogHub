@@ -3,9 +3,14 @@ package com.techloghub.api.subscription.repository;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.QueryHints;
 
 import com.techloghub.api.subscription.domain.NotificationEvent;
 import com.techloghub.api.subscription.domain.NotificationStatus;
+
+import jakarta.persistence.LockModeType;
+import jakarta.persistence.QueryHint;
 
 /**
  * 알림 이벤트의 영속성 조회 계약이다.
@@ -27,5 +32,9 @@ public interface NotificationEventRepository extends JpaRepository<NotificationE
 	 * @param status 알림 상태
 	 * @return 발송 처리 대상 목록
 	 */
+	@Lock(LockModeType.PESSIMISTIC_WRITE)
+	@QueryHints({
+		@QueryHint(name = "jakarta.persistence.lock.timeout", value = "-2")
+	})
 	List<NotificationEvent> findTop100ByStatusOrderByRequestedAtAsc(NotificationStatus status);
 }
