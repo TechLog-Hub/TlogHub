@@ -1,0 +1,34 @@
+name: Bug Report
+description: Bug, regression, or operational issue.
+title: "[Bug] "
+labels:
+  - type: fix
+body:
+  - type: textarea
+    id: symptom
+    attributes:
+      label: Symptom
+      description: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What should have happened?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Steps, command, request, or data needed to reproduce.
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact
+      description: User, operational, or development impact.
+    validations:
+      required: true

@@ -1,0 +1,8 @@
+# T-Log repository ownership.
+# CODEOWNERS is intentionally simple while the project is in MVP bootstrap.
+
+* @ImGdevel
+
+/apps/api/ @ImGdevel
+/.github/ @ImGdevel
+/scripts/ @ImGdevel

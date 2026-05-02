@@ -1,0 +1,34 @@
+name: Work Item
+description: Feature, chore, refactor, docs, or test work.
+title: "[Work] "
+labels:
+  - status: ready for review
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What should be achieved?
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: Include affected area and explicit out-of-scope items.
+    validations:
+      required: true
+  - type: textarea
+    id: done
+    attributes:
+      label: Done Criteria
+      description: What must be true before this issue can be closed?
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation
+      description: Required checks or manual verification.
+    validations:
+      required: true
