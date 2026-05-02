@@ -7,6 +7,11 @@ import java.time.Instant;
 
 import com.techloghub.api.common.domain.BaseEntity;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -18,6 +23,10 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
 @Entity
+@Getter
+@Builder(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(
 	name = "subscriber",
 	uniqueConstraints = {
@@ -44,9 +53,6 @@ public class Subscriber extends BaseEntity {
 
 	@Column(name = "verified_at")
 	private Instant verifiedAt;
-
-	protected Subscriber() {
-	}
 
 	private Subscriber(String email) {
 		this.email = requireNonBlank(email, "email").toLowerCase();
@@ -79,25 +85,5 @@ public class Subscriber extends BaseEntity {
 
 	public void rotateManageToken(String manageTokenHash) {
 		this.manageTokenHash = normalizeBlankToNull(manageTokenHash);
-	}
-
-	public Long getId() {
-		return id;
-	}
-
-	public String getEmail() {
-		return email;
-	}
-
-	public SubscriberStatus getStatus() {
-		return status;
-	}
-
-	public String getManageTokenHash() {
-		return manageTokenHash;
-	}
-
-	public Instant getVerifiedAt() {
-		return verifiedAt;
 	}
 }

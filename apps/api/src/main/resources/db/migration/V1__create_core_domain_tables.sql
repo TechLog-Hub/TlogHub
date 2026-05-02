@@ -243,6 +243,8 @@ CREATE TABLE admin_audit_log (
   before_json TEXT,
   after_json TEXT,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  version BIGINT NOT NULL DEFAULT 0,
   CONSTRAINT fk_admin_audit_log_admin_user FOREIGN KEY (admin_user_id) REFERENCES admin_user (id)
 );
 

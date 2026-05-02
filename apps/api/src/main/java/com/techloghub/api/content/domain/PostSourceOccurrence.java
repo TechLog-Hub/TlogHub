@@ -7,6 +7,11 @@ import java.time.Instant;
 
 import com.techloghub.api.common.domain.BaseEntity;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -22,6 +27,10 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
 @Entity
+@Getter
+@Builder(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(
 	name = "post_source_occurrence",
 	uniqueConstraints = {
@@ -35,6 +44,8 @@ import jakarta.persistence.UniqueConstraint;
 	}
 )
 public class PostSourceOccurrence extends BaseEntity {
+
+	private static final int URL_MAX_LENGTH = 1_000;
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -59,9 +70,6 @@ public class PostSourceOccurrence extends BaseEntity {
 	@Column(name = "duplicate_type", nullable = false, length = 30)
 	private DuplicateType duplicateType;
 
-	protected PostSourceOccurrence() {
-	}
-
 	private PostSourceOccurrence(
 		ArchivedPost archivedPost,
 		SourceBlog sourceBlog,
@@ -74,6 +82,9 @@ public class PostSourceOccurrence extends BaseEntity {
 		this.originUrl = requireNonBlank(originUrl, "originUrl");
 		this.publishedAt = requireNonNull(publishedAt, "publishedAt");
 		this.duplicateType = requireNonNull(duplicateType, "duplicateType");
+		if (this.originUrl.length() > URL_MAX_LENGTH) {
+			throw new IllegalArgumentException("originUrl length must be <= " + URL_MAX_LENGTH);
+		}
 	}
 
 	public static PostSourceOccurrence original(ArchivedPost archivedPost, SourceBlog sourceBlog, String originUrl, Instant publishedAt) {
@@ -93,27 +104,7 @@ public class PostSourceOccurrence extends BaseEntity {
 		return new PostSourceOccurrence(archivedPost, sourceBlog, originUrl, publishedAt, duplicateType);
 	}
 
-	public Long getId() {
-		return id;
-	}
-
-	public ArchivedPost getArchivedPost() {
-		return archivedPost;
-	}
-
-	public SourceBlog getSourceBlog() {
-		return sourceBlog;
-	}
-
-	public String getOriginUrl() {
-		return originUrl;
-	}
-
-	public Instant getPublishedAt() {
-		return publishedAt;
-	}
-
-	public DuplicateType getDuplicateType() {
-		return duplicateType;
+	public boolean isOriginal() {
+		return duplicateType == DuplicateType.ORIGINAL;
 	}
 }

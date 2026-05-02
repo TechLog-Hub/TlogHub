@@ -1,12 +1,19 @@
 package com.techloghub.api.content.domain;
 
 import static com.techloghub.api.common.domain.DomainGuard.normalizeBlankToNull;
+import static com.techloghub.api.common.domain.DomainGuard.requireBoolean;
+import static com.techloghub.api.common.domain.DomainGuard.requireNonNegative;
 import static com.techloghub.api.common.domain.DomainGuard.requireNonNull;
 
 import java.time.Instant;
 
 import com.techloghub.api.common.domain.BaseEntity;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -21,6 +28,10 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
+@Getter
+@Builder(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(
 	name = "collection_run",
 	indexes = {
@@ -58,9 +69,6 @@ public class CollectionRun extends BaseEntity {
 	@Column(name = "failure_reason", columnDefinition = "text")
 	private String failureReason;
 
-	protected CollectionRun() {
-	}
-
 	private CollectionRun(SourceBlog sourceBlog, Instant startedAt) {
 		this.sourceBlog = requireNonNull(sourceBlog, "sourceBlog");
 		this.startedAt = requireNonNull(startedAt, "startedAt");
@@ -72,48 +80,18 @@ public class CollectionRun extends BaseEntity {
 	}
 
 	public void succeed(Instant finishedAt, int collectedCount, int newPostCount) {
+		requireBoolean(this.status == CollectionRunStatus.RUNNING, "collection run already finished");
 		this.finishedAt = requireNonNull(finishedAt, "finishedAt");
-		this.collectedCount = collectedCount;
-		this.newPostCount = newPostCount;
+		this.collectedCount = requireNonNegative(collectedCount, "collectedCount");
+		this.newPostCount = requireNonNegative(newPostCount, "newPostCount");
 		this.failureReason = null;
 		this.status = CollectionRunStatus.SUCCESS;
 	}
 
 	public void fail(Instant finishedAt, String failureReason) {
+		requireBoolean(this.status == CollectionRunStatus.RUNNING, "collection run already finished");
 		this.finishedAt = requireNonNull(finishedAt, "finishedAt");
 		this.failureReason = normalizeBlankToNull(failureReason);
 		this.status = CollectionRunStatus.FAILED;
-	}
-
-	public Long getId() {
-		return id;
-	}
-
-	public SourceBlog getSourceBlog() {
-		return sourceBlog;
-	}
-
-	public Instant getStartedAt() {
-		return startedAt;
-	}
-
-	public Instant getFinishedAt() {
-		return finishedAt;
-	}
-
-	public CollectionRunStatus getStatus() {
-		return status;
-	}
-
-	public int getCollectedCount() {
-		return collectedCount;
-	}
-
-	public int getNewPostCount() {
-		return newPostCount;
-	}
-
-	public String getFailureReason() {
-		return failureReason;
 	}
 }

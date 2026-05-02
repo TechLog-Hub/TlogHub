@@ -5,6 +5,11 @@ import static com.techloghub.api.common.domain.DomainGuard.requireNonNull;
 
 import com.techloghub.api.common.domain.BaseEntity;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -16,6 +21,10 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
 @Entity
+@Getter
+@Builder(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(
 	name = "admin_user",
 	uniqueConstraints = {
@@ -23,6 +32,9 @@ import jakarta.persistence.UniqueConstraint;
 	}
 )
 public class AdminUser extends BaseEntity {
+
+	private static final int EMAIL_MAX_LENGTH = 320;
+	private static final int PASSWORD_HASH_MAX_LENGTH = 255;
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -42,14 +54,13 @@ public class AdminUser extends BaseEntity {
 	@Column(name = "active", nullable = false)
 	private boolean active;
 
-	protected AdminUser() {
-	}
-
 	private AdminUser(String email, String passwordHash, AdminRole role) {
 		this.email = requireNonBlank(email, "email").toLowerCase();
 		this.passwordHash = requireNonBlank(passwordHash, "passwordHash");
 		this.role = requireNonNull(role, "role");
 		this.active = true;
+		validateEmailLength(this.email);
+		validatePasswordHashLength(this.passwordHash);
 	}
 
 	public static AdminUser create(String email, String passwordHash) {
@@ -58,6 +69,7 @@ public class AdminUser extends BaseEntity {
 
 	public void changePasswordHash(String passwordHash) {
 		this.passwordHash = requireNonBlank(passwordHash, "passwordHash");
+		validatePasswordHashLength(this.passwordHash);
 	}
 
 	public void activate() {
@@ -68,23 +80,19 @@ public class AdminUser extends BaseEntity {
 		this.active = false;
 	}
 
-	public Long getId() {
-		return id;
+	public void promote(AdminRole role) {
+		this.role = requireNonNull(role, "role");
 	}
 
-	public String getEmail() {
-		return email;
+	private static void validateEmailLength(String value) {
+		if (value.length() > EMAIL_MAX_LENGTH) {
+			throw new IllegalArgumentException("email length must be <= " + EMAIL_MAX_LENGTH);
+		}
 	}
 
-	public String getPasswordHash() {
-		return passwordHash;
-	}
-
-	public AdminRole getRole() {
-		return role;
-	}
-
-	public boolean isActive() {
-		return active;
+	private static void validatePasswordHashLength(String value) {
+		if (value.length() > PASSWORD_HASH_MAX_LENGTH) {
+			throw new IllegalArgumentException("passwordHash length must be <= " + PASSWORD_HASH_MAX_LENGTH);
+		}
 	}
 }

@@ -12,6 +12,11 @@ import java.util.Set;
 
 import com.techloghub.api.common.domain.BaseEntity;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -22,13 +27,17 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.JoinTable;
 
 @Entity
+@Getter
+@Builder(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(
 	name = "archived_post",
 	uniqueConstraints = {
@@ -46,6 +55,9 @@ public class ArchivedPost extends BaseEntity {
 
 	private static final int MAX_JOB_CATEGORY_COUNT = 3;
 	private static final int MAX_TOPIC_TAG_COUNT = 8;
+	private static final int SLUG_MAX_LENGTH = 180;
+	private static final int TITLE_MAX_LENGTH = 500;
+	private static final int URL_MAX_LENGTH = 1_000;
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -104,6 +116,7 @@ public class ArchivedPost extends BaseEntity {
 			)
 		}
 	)
+	@Builder.Default
 	private Set<JobCategory> jobCategories = new LinkedHashSet<>();
 
 	@ManyToMany
@@ -118,10 +131,8 @@ public class ArchivedPost extends BaseEntity {
 			)
 		}
 	)
+	@Builder.Default
 	private Set<TopicTag> topicTags = new LinkedHashSet<>();
-
-	protected ArchivedPost() {
-	}
 
 	private ArchivedPost(
 		SourceBlog sourceBlog,
@@ -144,6 +155,12 @@ public class ArchivedPost extends BaseEntity {
 		this.collectedAt = requireNonNull(collectedAt, "collectedAt");
 		this.processingState = ProcessingState.COLLECTED;
 		this.visibilityState = VisibilityState.DRAFT;
+		this.jobCategories = new LinkedHashSet<>();
+		this.topicTags = new LinkedHashSet<>();
+		validateSlugLength(this.slug);
+		validateTitleLength(this.title);
+		validateUrlLength(this.originUrl);
+		validateUrlLength(this.canonicalUrl);
 	}
 
 	public static ArchivedPost collect(
@@ -156,17 +173,28 @@ public class ArchivedPost extends BaseEntity {
 		Instant publishedAt,
 		Instant collectedAt
 	) {
-		return new ArchivedPost(sourceBlog, slug, title, originUrl, canonicalUrl, canonicalFingerprint, publishedAt, collectedAt);
+		return new ArchivedPost(
+			sourceBlog,
+			slug,
+			title,
+			originUrl,
+			canonicalUrl,
+			canonicalFingerprint,
+			publishedAt,
+			collectedAt
+		);
 	}
 
 	public void replaceJobCategories(Collection<JobCategory> categories) {
-		requireMaxSize(categories, MAX_JOB_CATEGORY_COUNT, "jobCategories");
-		this.jobCategories = new LinkedHashSet<>(categories);
+		requireMaxSize(requireNonNullCategories(categories), MAX_JOB_CATEGORY_COUNT, "jobCategories");
+		this.jobCategories.clear();
+		this.jobCategories.addAll(categories);
 	}
 
 	public void replaceTopicTags(Collection<TopicTag> tags) {
-		requireMaxSize(tags, MAX_TOPIC_TAG_COUNT, "topicTags");
-		this.topicTags = new LinkedHashSet<>(tags);
+		requireMaxSize(requireNonNullCategories(tags), MAX_TOPIC_TAG_COUNT, "topicTags");
+		this.topicTags.clear();
+		this.topicTags.addAll(tags);
 	}
 
 	public void markClassified() {
@@ -174,14 +202,14 @@ public class ArchivedPost extends BaseEntity {
 		this.reviewReason = null;
 	}
 
-	public void requireReview(String reason) {
+	public void requestReview(String reason) {
 		this.processingState = ProcessingState.REVIEW_REQUIRED;
 		this.reviewReason = requireNonBlank(reason, "reason");
 	}
 
 	public void publish() {
 		if (processingState == ProcessingState.REVIEW_REQUIRED) {
-			throw new IllegalStateException("review required post cannot be published");
+			throw new IllegalArgumentException("review required post cannot be published");
 		}
 		this.visibilityState = VisibilityState.PUBLISHED;
 	}
@@ -196,56 +224,9 @@ public class ArchivedPost extends BaseEntity {
 		this.reviewReason = requireNonBlank(reason, "reason");
 	}
 
-	public Long getId() {
-		return id;
-	}
-
-	public SourceBlog getSourceBlog() {
-		return sourceBlog;
-	}
-
-	public Company getCompany() {
-		return company;
-	}
-
-	public String getSlug() {
-		return slug;
-	}
-
-	public String getTitle() {
-		return title;
-	}
-
-	public String getOriginUrl() {
-		return originUrl;
-	}
-
-	public String getCanonicalUrl() {
-		return canonicalUrl;
-	}
-
-	public String getCanonicalFingerprint() {
-		return canonicalFingerprint;
-	}
-
-	public Instant getPublishedAt() {
-		return publishedAt;
-	}
-
-	public Instant getCollectedAt() {
-		return collectedAt;
-	}
-
-	public ProcessingState getProcessingState() {
-		return processingState;
-	}
-
-	public VisibilityState getVisibilityState() {
-		return visibilityState;
-	}
-
-	public String getReviewReason() {
-		return reviewReason;
+	public void changeTitle(String title) {
+		this.title = requireNonBlank(title, "title");
+		validateTitleLength(this.title);
 	}
 
 	public Set<JobCategory> getJobCategories() {
@@ -254,5 +235,27 @@ public class ArchivedPost extends BaseEntity {
 
 	public Set<TopicTag> getTopicTags() {
 		return Set.copyOf(topicTags);
+	}
+
+	private static void validateSlugLength(String value) {
+		if (value.length() > SLUG_MAX_LENGTH) {
+			throw new IllegalArgumentException("slug length must be <= " + SLUG_MAX_LENGTH);
+		}
+	}
+
+	private static void validateTitleLength(String value) {
+		if (value.length() > TITLE_MAX_LENGTH) {
+			throw new IllegalArgumentException("title length must be <= " + TITLE_MAX_LENGTH);
+		}
+	}
+
+	private static void validateUrlLength(String value) {
+		if (value.length() > URL_MAX_LENGTH) {
+			throw new IllegalArgumentException("url length must be <= " + URL_MAX_LENGTH);
+		}
+	}
+
+	private static <T> Collection<T> requireNonNullCategories(Collection<T> values) {
+		return java.util.Objects.requireNonNull(values, "categories must not be null");
 	}
 }

@@ -4,8 +4,13 @@ import static com.techloghub.api.common.domain.DomainGuard.normalizeBlankToNull;
 import static com.techloghub.api.common.domain.DomainGuard.requireNonBlank;
 import static com.techloghub.api.common.domain.DomainGuard.requireNonNull;
 
-import java.time.Instant;
+import com.techloghub.api.common.domain.BaseEntity;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -18,6 +23,10 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
+@Getter
+@Builder(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(
 	name = "admin_audit_log",
 	indexes = {
@@ -25,7 +34,7 @@ import jakarta.persistence.Table;
 		@Index(name = "idx_admin_audit_log_target", columnList = "target_type, target_id")
 	}
 )
-public class AdminAuditLog {
+public class AdminAuditLog extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -51,20 +60,13 @@ public class AdminAuditLog {
 	@Column(name = "after_json", columnDefinition = "text")
 	private String afterJson;
 
-	@Column(name = "created_at", nullable = false, updatable = false)
-	private Instant createdAt;
-
-	protected AdminAuditLog() {
-	}
-
 	private AdminAuditLog(
 		AdminUser adminUser,
 		String actionType,
 		String targetType,
 		Long targetId,
 		String beforeJson,
-		String afterJson,
-		Instant createdAt
+		String afterJson
 	) {
 		this.adminUser = adminUser;
 		this.actionType = requireNonBlank(actionType, "actionType");
@@ -72,7 +74,6 @@ public class AdminAuditLog {
 		this.targetId = requireNonNull(targetId, "targetId");
 		this.beforeJson = normalizeBlankToNull(beforeJson);
 		this.afterJson = normalizeBlankToNull(afterJson);
-		this.createdAt = requireNonNull(createdAt, "createdAt");
 	}
 
 	public static AdminAuditLog record(
@@ -81,41 +82,8 @@ public class AdminAuditLog {
 		String targetType,
 		Long targetId,
 		String beforeJson,
-		String afterJson,
-		Instant createdAt
+		String afterJson
 	) {
-		return new AdminAuditLog(adminUser, actionType, targetType, targetId, beforeJson, afterJson, createdAt);
-	}
-
-	public Long getId() {
-		return id;
-	}
-
-	public AdminUser getAdminUser() {
-		return adminUser;
-	}
-
-	public String getActionType() {
-		return actionType;
-	}
-
-	public String getTargetType() {
-		return targetType;
-	}
-
-	public Long getTargetId() {
-		return targetId;
-	}
-
-	public String getBeforeJson() {
-		return beforeJson;
-	}
-
-	public String getAfterJson() {
-		return afterJson;
-	}
-
-	public Instant getCreatedAt() {
-		return createdAt;
+		return new AdminAuditLog(adminUser, actionType, targetType, targetId, beforeJson, afterJson);
 	}
 }

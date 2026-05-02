@@ -8,6 +8,11 @@ import java.time.Instant;
 import com.techloghub.api.common.domain.BaseEntity;
 import com.techloghub.api.content.domain.ArchivedPost;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -23,6 +28,10 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
 @Entity
+@Getter
+@Builder(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(
 	name = "notification_event",
 	uniqueConstraints = {
@@ -64,10 +73,12 @@ public class NotificationEvent extends BaseEntity {
 	@Column(name = "failure_reason", columnDefinition = "text")
 	private String failureReason;
 
-	protected NotificationEvent() {
-	}
-
-	private NotificationEvent(Subscriber subscriber, ArchivedPost archivedPost, NotificationChannel channel, Instant requestedAt) {
+	private NotificationEvent(
+		Subscriber subscriber,
+		ArchivedPost archivedPost,
+		NotificationChannel channel,
+		Instant requestedAt
+	) {
 		this.subscriber = requireNonNull(subscriber, "subscriber");
 		this.archivedPost = requireNonNull(archivedPost, "archivedPost");
 		this.channel = requireNonNull(channel, "channel");
@@ -90,35 +101,12 @@ public class NotificationEvent extends BaseEntity {
 		this.status = NotificationStatus.FAILED;
 	}
 
-	public Long getId() {
-		return id;
+	public void markSkipped(String reason) {
+		this.failureReason = normalizeBlankToNull(reason);
+		this.status = NotificationStatus.SKIPPED;
 	}
 
-	public Subscriber getSubscriber() {
-		return subscriber;
-	}
-
-	public ArchivedPost getArchivedPost() {
-		return archivedPost;
-	}
-
-	public NotificationChannel getChannel() {
-		return channel;
-	}
-
-	public NotificationStatus getStatus() {
-		return status;
-	}
-
-	public Instant getRequestedAt() {
-		return requestedAt;
-	}
-
-	public Instant getSentAt() {
-		return sentAt;
-	}
-
-	public String getFailureReason() {
-		return failureReason;
+	public boolean isRequested() {
+		return status == NotificationStatus.REQUESTED;
 	}
 }
