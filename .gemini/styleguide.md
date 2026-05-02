@@ -20,7 +20,7 @@ Gemini Code Assist는 PR에서 높은 신뢰도의 문제만 짧게 남긴다.
 
 - Wiki 요구사항과 설계에서 벗어난 동작 변경을 우선 확인한다.
 - branch, PR, hook, commit workflow를 우회하는 변경을 확인한다.
-- Spring 백엔드는 Java 21, Spring Boot 3.5.x, Maven wrapper 기준을 따른다.
+- Spring 백엔드는 Java 21, Spring Boot 3.5.x, repository root Gradle wrapper 기준을 따른다.
 - Spring 설정 파일은 `application.yml`과 profile별 `application-<profile>.yml`만 사용한다.
 - JPA entity는 public setter를 남발하지 않고 factory와 business method 중심으로 상태를 변경한다.
 - Flyway migration과 JPA mapping이 서로 다른 제약을 표현하지 않게 한다.

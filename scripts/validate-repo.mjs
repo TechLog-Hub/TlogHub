@@ -10,6 +10,18 @@ const forbiddenStagedPatterns = [
     pattern: /^apps\/api\/src\/test\/resources\/application(?:-[^/]+)?\.properties$/,
     reason: 'T-Log API uses application.yml and application-<profile>.yml only',
   },
+  {
+    pattern: /^apps\/api\/pom\.xml$/,
+    reason: 'T-Log API uses Gradle. Do not add Maven build files.',
+  },
+  {
+    pattern: /^apps\/api\/mvnw(?:\.cmd)?$/,
+    reason: 'T-Log API uses the root Gradle wrapper.',
+  },
+  {
+    pattern: /^apps\/api\/\.mvn\//,
+    reason: 'T-Log API uses the root Gradle wrapper.',
+  },
 ];
 
 function git(args) {

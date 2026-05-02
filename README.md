@@ -100,20 +100,18 @@ npm install
 npm run validate:repo
 ```
 
-API는 `apps/api`의 Maven wrapper로 실행한다.
+API는 repository root의 Gradle wrapper로 실행한다.
 
 ```bash
-cd apps/api
-./mvnw test
-./mvnw spring-boot:run
+./gradlew :apps:api:test
+./gradlew :apps:api:bootRun
 ```
 
 Windows PowerShell에서는 다음 명령을 사용한다.
 
 ```powershell
-cd apps/api
-.\mvnw.cmd test
-.\mvnw.cmd spring-boot:run
+.\gradlew.bat :apps:api:test
+.\gradlew.bat :apps:api:bootRun
 ```
 
 기본 API 주소는 `http://localhost:8080`이며, Actuator health endpoint는 `http://localhost:8080/actuator/health`다.
