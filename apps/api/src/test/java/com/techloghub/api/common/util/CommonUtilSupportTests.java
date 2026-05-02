@@ -44,6 +44,7 @@ class CommonUtilSupportTests {
 	@Test
 	void parsesEnumAndBuildsCacheKey() {
 		assertThat(EnumParser.parseNameIgnoreCase(SampleState.class, "ready", "state")).isEqualTo(SampleState.READY);
+		assertThat(EnumParser.allowedNames(SampleState.class)).isEqualTo("READY");
 		assertThat(KeySupport.cacheKeyOf("Public Filter", "Toss", 1)).isEqualTo("public-filter:toss:1");
 	}
 
@@ -52,6 +53,9 @@ class CommonUtilSupportTests {
 		assertThat(UrlSupport.normalizeUrl("HTTPS://Example.COM/docs///?q=spring"))
 			.isEqualTo("https://example.com/docs?q=spring");
 		assertThat(SlugSupport.slugify("Spring Boot 운영 경험")).isEqualTo("spring-boot");
+		assertThatThrownBy(() -> SlugSupport.slugify("운영 경험"))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessageContaining("slug 생성 결과");
 		assertThat(CryptoSupport.sha256Hex("techlog")).hasSize(64);
 		assertThat(MaskingSupport.maskEmail("tester@example.com")).isEqualTo("te***@example.com");
 		assertThat(MaskingSupport.maskSecret("1234567890abcdef")).isEqualTo("1234***cdef");

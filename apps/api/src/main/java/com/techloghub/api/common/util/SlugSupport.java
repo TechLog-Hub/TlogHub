@@ -28,7 +28,11 @@ public final class SlugSupport {
 			.toLowerCase(Locale.ROOT)
 			.trim();
 		String slug = NON_SLUG.matcher(ascii).replaceAll("-");
-		return EDGE_DASH.matcher(MULTI_DASH.matcher(slug).replaceAll("-")).replaceAll("");
+		String result = EDGE_DASH.matcher(MULTI_DASH.matcher(slug).replaceAll("-")).replaceAll("");
+		if (result.isEmpty()) {
+			throw new IllegalArgumentException("slug 생성 결과가 비어 있습니다. 유효한 문자가 포함되어야 합니다.");
+		}
+		return result;
 	}
 
 	public static void validateSlug(String slug) {

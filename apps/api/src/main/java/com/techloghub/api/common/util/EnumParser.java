@@ -34,10 +34,10 @@ public final class EnumParser {
 		return result;
 	}
 
-	public static String allowedNames(Class<?> enumType) {
+	public static <E extends Enum<E>> String allowedNames(Class<E> enumType) {
 		return String.join(
 			", ",
-			Arrays.stream(enumType.asSubclass(Enum.class).getEnumConstants())
+			Arrays.stream(enumType.getEnumConstants())
 				.map(Enum::name)
 				.toList()
 		);

@@ -45,7 +45,8 @@ public class FieldErrorMapper {
 		return violations.stream()
 			.map(violation -> FieldErrorResponse.of(
 				violation.getPropertyPath().toString(),
-				safeReason(violation.getMessage())
+				safeReason(violation.getMessage()),
+				safeRejectedValue(violation.getPropertyPath().toString(), violation.getInvalidValue())
 			))
 			.toList();
 	}
