@@ -11,6 +11,8 @@ node_modules
 apps/web/node_modules
 apps/web/.next
 apps/api/target
+apps/api/build
+.gradle
 dist
 dist-ssr
 *.local
