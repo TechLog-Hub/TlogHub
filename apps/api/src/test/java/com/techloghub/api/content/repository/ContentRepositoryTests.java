@@ -136,7 +136,7 @@ class ContentRepositoryTests {
 		).getContent()).extracting(ArchivedPostListQueryDto::slug)
 			.containsExactly("toss-spring", "toss-kafka");
 		assertThat(archivedPostRepository.searchPublished(
-			ArchivedPostSearchCondition.of("Spring 운영", null, null, null),
+			ArchivedPostSearchCondition.of("Spring 운영", List.of(), List.of(), List.of()),
 			PageRequest.of(0, 10)
 		).getContent()).extracting(ArchivedPostListQueryDto::slug)
 			.containsExactly("toss-spring");

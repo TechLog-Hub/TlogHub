@@ -2,7 +2,9 @@ package com.techloghub.api.content.repository.impl;
 
 import static com.techloghub.api.content.domain.QArchivedPost.archivedPost;
 import static com.techloghub.api.content.domain.QCompany.company;
+import static com.techloghub.api.content.domain.QJobCategory.jobCategory;
 import static com.techloghub.api.content.domain.QSourceBlog.sourceBlog;
+import static com.techloghub.api.content.domain.QTopicTag.topicTag;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,9 +24,12 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.techloghub.api.content.domain.VisibilityState;
+import com.techloghub.api.content.repository.ArchivedPostJobCategoryQueryDto;
 import com.techloghub.api.content.repository.ArchivedPostListQueryDto;
 import com.techloghub.api.content.repository.ArchivedPostQueryRepository;
 import com.techloghub.api.content.repository.ArchivedPostSearchCondition;
+import com.techloghub.api.content.repository.ArchivedPostTopicTagQueryDto;
+import com.techloghub.api.content.repository.FilterCountQueryDto;
 
 import lombok.RequiredArgsConstructor;
 
@@ -45,9 +50,9 @@ public class ArchivedPostRepositoryImpl implements ArchivedPostQueryRepository {
 		BooleanExpression whereCondition = nullSafeBuilder(
 			publishedOnly(),
 			keywordContainsAllTokens(safeCondition.keyword()),
-			companySlugEq(safeCondition.companySlug()),
-			jobCategoryCodeEq(safeCondition.jobCategoryCode()),
-			topicTagSlugEq(safeCondition.topicTagSlug())
+			companySlugIn(safeCondition.companySlugs()),
+			jobCategoryCodeIn(safeCondition.jobCategoryCodes()),
+			topicTagSlugIn(safeCondition.topicTagSlugs())
 		);
 
 		List<ArchivedPostListQueryDto> content = queryFactory
@@ -81,6 +86,91 @@ public class ArchivedPostRepositoryImpl implements ArchivedPostQueryRepository {
 			pageable,
 			() -> Objects.requireNonNullElse(countQuery.fetchOne(), 0L)
 		);
+	}
+
+	@Override
+	public List<ArchivedPostJobCategoryQueryDto> findJobCategoriesByPostIds(List<Long> postIds) {
+		if (postIds == null || postIds.isEmpty()) {
+			return List.of();
+		}
+
+		return queryFactory
+			.select(Projections.constructor(
+				ArchivedPostJobCategoryQueryDto.class,
+				archivedPost.id,
+				jobCategory.code,
+				jobCategory.labelKo
+			))
+			.from(archivedPost)
+			.join(archivedPost.jobCategories, jobCategory)
+			.where(archivedPost.id.in(postIds))
+			.orderBy(archivedPost.id.asc(), jobCategory.displayOrder.asc(), jobCategory.id.asc())
+			.fetch();
+	}
+
+	@Override
+	public List<ArchivedPostTopicTagQueryDto> findTopicTagsByPostIds(List<Long> postIds) {
+		if (postIds == null || postIds.isEmpty()) {
+			return List.of();
+		}
+
+		return queryFactory
+			.select(Projections.constructor(
+				ArchivedPostTopicTagQueryDto.class,
+				archivedPost.id,
+				topicTag.slug,
+				topicTag.label
+			))
+			.from(archivedPost)
+			.join(archivedPost.topicTags, topicTag)
+			.where(archivedPost.id.in(postIds))
+			.orderBy(archivedPost.id.asc(), topicTag.label.asc(), topicTag.id.asc())
+			.fetch();
+	}
+
+	@Override
+	public List<FilterCountQueryDto> countPublishedPostsByCompany() {
+		return queryFactory
+			.select(Projections.constructor(
+				FilterCountQueryDto.class,
+				company.slug,
+				archivedPost.id.count()
+			))
+			.from(archivedPost)
+			.join(archivedPost.company, company)
+			.where(publishedOnly())
+			.groupBy(company.slug)
+			.fetch();
+	}
+
+	@Override
+	public List<FilterCountQueryDto> countPublishedPostsByJobCategory() {
+		return queryFactory
+			.select(Projections.constructor(
+				FilterCountQueryDto.class,
+				jobCategory.code,
+				archivedPost.id.count()
+			))
+			.from(archivedPost)
+			.join(archivedPost.jobCategories, jobCategory)
+			.where(publishedOnly())
+			.groupBy(jobCategory.code)
+			.fetch();
+	}
+
+	@Override
+	public List<FilterCountQueryDto> countPublishedPostsByTopicTag() {
+		return queryFactory
+			.select(Projections.constructor(
+				FilterCountQueryDto.class,
+				topicTag.slug,
+				archivedPost.id.count()
+			))
+			.from(archivedPost)
+			.join(archivedPost.topicTags, topicTag)
+			.where(publishedOnly())
+			.groupBy(topicTag.slug)
+			.fetch();
 	}
 
 	private OrderSpecifier<?>[] orderSpecifiers(Pageable pageable) {
@@ -132,21 +222,21 @@ public class ArchivedPostRepositoryImpl implements ArchivedPostQueryRepository {
 		return expression;
 	}
 
-	private BooleanExpression companySlugEq(String companySlug) {
-		String normalizedCompanySlug = emptyToNull(companySlug);
-		return normalizedCompanySlug == null ? null : archivedPost.company.slug.eq(normalizedCompanySlug);
+	private BooleanExpression companySlugIn(List<String> companySlugs) {
+		List<String> normalizedCompanySlugs = normalizeValues(companySlugs);
+		return normalizedCompanySlugs.isEmpty() ? null : archivedPost.company.slug.in(normalizedCompanySlugs);
 	}
 
-	private BooleanExpression jobCategoryCodeEq(String jobCategoryCode) {
-		String normalizedJobCategoryCode = emptyToNull(jobCategoryCode);
-		return normalizedJobCategoryCode == null
+	private BooleanExpression jobCategoryCodeIn(List<String> jobCategoryCodes) {
+		List<String> normalizedJobCategoryCodes = normalizeValues(jobCategoryCodes);
+		return normalizedJobCategoryCodes.isEmpty()
 			? null
-			: archivedPost.jobCategories.any().code.eq(normalizedJobCategoryCode);
+			: archivedPost.jobCategories.any().code.in(normalizedJobCategoryCodes);
 	}
 
-	private BooleanExpression topicTagSlugEq(String topicTagSlug) {
-		String normalizedTopicTagSlug = emptyToNull(topicTagSlug);
-		return normalizedTopicTagSlug == null ? null : archivedPost.topicTags.any().slug.eq(normalizedTopicTagSlug);
+	private BooleanExpression topicTagSlugIn(List<String> topicTagSlugs) {
+		List<String> normalizedTopicTagSlugs = normalizeValues(topicTagSlugs);
+		return normalizedTopicTagSlugs.isEmpty() ? null : archivedPost.topicTags.any().slug.in(normalizedTopicTagSlugs);
 	}
 
 	private BooleanExpression nullSafeBuilder(BooleanExpression... expressions) {
@@ -161,5 +251,16 @@ public class ArchivedPostRepositoryImpl implements ArchivedPostQueryRepository {
 
 	private String emptyToNull(String value) {
 		return value == null || value.isBlank() ? null : value.trim();
+	}
+
+	private List<String> normalizeValues(List<String> values) {
+		if (values == null || values.isEmpty()) {
+			return List.of();
+		}
+		return values.stream()
+			.map(this::emptyToNull)
+			.filter(Objects::nonNull)
+			.distinct()
+			.toList();
 	}
 }
