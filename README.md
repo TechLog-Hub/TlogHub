@@ -12,6 +12,7 @@ techlog-hub/
 
 - Wiki: https://github.com/TechLog-Hub/TlogHub/wiki
 - 문서 정책: https://github.com/TechLog-Hub/TlogHub/wiki/documentation-policy
+- 백엔드 구조와 언어 결정: https://github.com/TechLog-Hub/TlogHub/wiki/decision-backend-structure-language
 
 구현 초안은 검토 전까지 Git 추적 대상에서 제외한다.
 
@@ -28,6 +29,15 @@ techlog-hub/
   요구사항, 화면 설계, 백엔드/API/Batch/Search 테크스팩, 계획 문서의 단일 문서 원천
 
 ## 실행
+
+### Root Tooling
+
+```bash
+npm install
+npm run validate:repo
+```
+
+Husky는 local Git hook을 설치한다. CI와 production install에서는 `HUSKY=0`을 사용한다.
 
 ### Web
 
