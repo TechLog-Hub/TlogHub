@@ -2,7 +2,6 @@
 
 - Milestone:
 - Assignee:
-- Labels:
 - Base/Head:
 
 ## Purpose
@@ -12,12 +11,6 @@
 ## Key Changes
 
 <!-- List the most important changes. Keep this reviewer-oriented, not a file-by-file changelog. -->
-
--
-
-## Review Focus
-
-<!-- Tell reviewers where to spend attention first. -->
 
 -
 

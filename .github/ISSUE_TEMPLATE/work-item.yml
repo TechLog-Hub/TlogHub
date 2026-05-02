@@ -2,7 +2,7 @@ name: Work Item
 description: Feature, chore, refactor, docs, or test work.
 title: "[Work] "
 labels:
-  - status: ready for review
+  - status: ready
 body:
   - type: textarea
     id: goal
