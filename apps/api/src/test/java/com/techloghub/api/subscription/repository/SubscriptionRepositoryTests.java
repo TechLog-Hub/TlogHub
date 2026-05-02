@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
 import com.techloghub.api.common.config.JpaAuditingConfiguration;
+import com.techloghub.api.common.config.QueryDslConfiguration;
 import com.techloghub.api.content.domain.ArchivedPost;
 import com.techloghub.api.content.domain.Company;
 import com.techloghub.api.content.domain.SourceBlog;
@@ -27,7 +28,7 @@ import com.techloghub.api.subscription.domain.SubscriptionVerificationRequest;
 
 @ActiveProfiles("test")
 @DataJpaTest
-@Import(JpaAuditingConfiguration.class)
+@Import({JpaAuditingConfiguration.class, QueryDslConfiguration.class})
 class SubscriptionRepositoryTests {
 
 	@Autowired

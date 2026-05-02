@@ -11,9 +11,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.context.ActiveProfiles;
 
 import com.techloghub.api.common.config.JpaAuditingConfiguration;
+import com.techloghub.api.common.config.QueryDslConfiguration;
 import com.techloghub.api.content.domain.AiSummary;
 import com.techloghub.api.content.domain.ArchivedPost;
 import com.techloghub.api.content.domain.CollectionRun;
@@ -30,7 +32,7 @@ import com.techloghub.api.content.domain.VisibilityState;
 
 @ActiveProfiles("test")
 @DataJpaTest
-@Import(JpaAuditingConfiguration.class)
+@Import({JpaAuditingConfiguration.class, QueryDslConfiguration.class})
 class ContentRepositoryTests {
 
 	@Autowired
@@ -80,6 +82,32 @@ class ContentRepositoryTests {
 		post.markClassified();
 		post.publish();
 		archivedPostRepository.saveAndFlush(post);
+		ArchivedPost olderPost = ArchivedPost.collect(
+			sourceBlog,
+			"toss-kafka",
+			"Kafka 메시징 운영",
+			"https://toss.tech/kafka",
+			"https://toss.tech/kafka",
+			"fingerprint-toss-kafka",
+			now.minus(2, ChronoUnit.HOURS),
+			now
+		);
+		olderPost.markClassified();
+		olderPost.publish();
+		archivedPostRepository.saveAndFlush(olderPost);
+		ArchivedPost hiddenPost = ArchivedPost.collect(
+			sourceBlog,
+			"toss-hidden",
+			"Spring 운영 숨김 글",
+			"https://toss.tech/hidden",
+			"https://toss.tech/hidden",
+			"fingerprint-toss-hidden",
+			now.minus(30, ChronoUnit.MINUTES),
+			now
+		);
+		hiddenPost.markClassified();
+		hiddenPost.hide("운영자 숨김");
+		archivedPostRepository.saveAndFlush(hiddenPost);
 		aiSummaryRepository.saveAndFlush(AiSummary.ready(
 			post,
 			1,
@@ -102,25 +130,31 @@ class ContentRepositoryTests {
 		assertThat(jobCategoryRepository.findByActiveTrueOrderByDisplayOrderAsc()).containsExactly(backend);
 		assertThat(topicTagRepository.findByActiveTrueOrderByLabelAsc()).containsExactly(spring);
 		assertThat(archivedPostRepository.existsByCanonicalFingerprint("fingerprint-toss-spring")).isTrue();
-		assertThat(archivedPostRepository.findByVisibilityStateOrderByPublishedAtDesc(
-			VisibilityState.PUBLISHED,
+		assertThat(archivedPostRepository.searchPublished(
+			ArchivedPostSearchCondition.all(),
 			PageRequest.of(0, 10)
-		)).hasSize(1);
-		assertThat(archivedPostRepository.findByCompany_SlugAndVisibilityStateOrderByPublishedAtDesc(
-			"toss",
-			VisibilityState.PUBLISHED,
+		).getContent()).extracting(ArchivedPostListQueryDto::slug)
+			.containsExactly("toss-spring", "toss-kafka");
+		assertThat(archivedPostRepository.searchPublished(
+			ArchivedPostSearchCondition.of("Spring 운영", null, null, null),
 			PageRequest.of(0, 10)
-		)).hasSize(1);
-		assertThat(archivedPostRepository.findDistinctByJobCategories_CodeAndVisibilityStateOrderByPublishedAtDesc(
-			"Backend",
-			VisibilityState.PUBLISHED,
+		).getContent()).extracting(ArchivedPostListQueryDto::slug)
+			.containsExactly("toss-spring");
+		assertThat(archivedPostRepository.searchPublished(
+			ArchivedPostSearchCondition.of(null, "toss", null, null),
+			PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "unsupported"))
+		).getContent()).extracting(ArchivedPostListQueryDto::slug)
+			.containsExactly("toss-spring", "toss-kafka");
+		assertThat(archivedPostRepository.searchPublished(
+			ArchivedPostSearchCondition.of(null, null, "Backend", null),
 			PageRequest.of(0, 10)
-		)).hasSize(1);
-		assertThat(archivedPostRepository.findDistinctByTopicTags_SlugAndVisibilityStateOrderByPublishedAtDesc(
-			"spring",
-			VisibilityState.PUBLISHED,
+		).getContent()).extracting(ArchivedPostListQueryDto::slug)
+			.containsExactly("toss-spring");
+		assertThat(archivedPostRepository.searchPublished(
+			ArchivedPostSearchCondition.of(null, null, null, "spring"),
 			PageRequest.of(0, 10)
-		)).hasSize(1);
+		).getContent()).extracting(ArchivedPostListQueryDto::slug)
+			.containsExactly("toss-spring");
 		assertThat(archivedPostRepository.findDetailedBySlugAndVisibilityState("toss-spring", VisibilityState.PUBLISHED))
 			.hasValueSatisfying(found -> {
 				assertThat(found.getCompany().getSlug()).isEqualTo("toss");

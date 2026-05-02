@@ -12,10 +12,11 @@ import org.springframework.test.context.ActiveProfiles;
 import com.techloghub.api.admin.domain.AdminAuditLog;
 import com.techloghub.api.admin.domain.AdminUser;
 import com.techloghub.api.common.config.JpaAuditingConfiguration;
+import com.techloghub.api.common.config.QueryDslConfiguration;
 
 @ActiveProfiles("test")
 @DataJpaTest
-@Import(JpaAuditingConfiguration.class)
+@Import({JpaAuditingConfiguration.class, QueryDslConfiguration.class})
 class AdminRepositoryTests {
 
 	@Autowired
