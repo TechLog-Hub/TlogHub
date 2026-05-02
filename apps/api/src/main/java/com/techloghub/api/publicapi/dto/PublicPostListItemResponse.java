@@ -3,6 +3,7 @@ package com.techloghub.api.publicapi.dto;
 import java.time.Instant;
 import java.util.List;
 
+import com.techloghub.api.common.util.CollectionSupport;
 import com.techloghub.api.content.repository.ArchivedPostListQueryDto;
 
 /**
@@ -32,8 +33,8 @@ public record PublicPostListItemResponse(
 	String originUrl
 ) {
 	public PublicPostListItemResponse {
-		jobCategories = List.copyOf(jobCategories == null ? List.of() : jobCategories);
-		topicTags = List.copyOf(topicTags == null ? List.of() : topicTags);
+		jobCategories = CollectionSupport.nullToEmptyList(jobCategories);
+		topicTags = CollectionSupport.nullToEmptyList(topicTags);
 	}
 
 	public static PublicPostListItemResponse of(

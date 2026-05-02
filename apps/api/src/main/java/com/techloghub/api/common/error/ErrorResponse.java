@@ -3,6 +3,7 @@ package com.techloghub.api.common.error;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.techloghub.api.common.util.CollectionSupport;
 
 /**
  * API 공통 오류 응답이다.
@@ -19,7 +20,7 @@ public record ErrorResponse(
 	String traceId
 ) {
 	public ErrorResponse {
-		errors = List.copyOf(errors == null ? List.of() : errors);
+		errors = CollectionSupport.nullToEmptyList(errors);
 	}
 
 	public static ErrorResponse of(ErrorCode errorCode) {

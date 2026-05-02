@@ -23,7 +23,7 @@ public final class CollectionSupport {
 		if (values == null || values.isEmpty()) {
 			return List.of();
 		}
-		return Collections.unmodifiableList(new ArrayList<>(values));
+		return List.copyOf(values);
 	}
 
 	public static <T> boolean isNullOrEmpty(Collection<T> values) {
@@ -46,6 +46,25 @@ public final class CollectionSupport {
 				throw new IllegalArgumentException("중복 key가 존재합니다. key=" + key);
 			}
 			result.put(key, value);
+		}
+		return result;
+	}
+
+	public static <T, K, V> Map<K, V> toValueMapStrict(
+		Collection<T> values,
+		Function<T, K> keyExtractor,
+		Function<T, V> valueExtractor
+	) {
+		Map<K, V> result = new LinkedHashMap<>();
+		if (values == null || values.isEmpty()) {
+			return result;
+		}
+		for (T value : values) {
+			K key = keyExtractor.apply(value);
+			if (result.containsKey(key)) {
+				throw new IllegalArgumentException("중복 key가 존재합니다. key=" + key);
+			}
+			result.put(key, valueExtractor.apply(value));
 		}
 		return result;
 	}

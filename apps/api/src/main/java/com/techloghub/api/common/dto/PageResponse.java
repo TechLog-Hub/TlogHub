@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.springframework.data.domain.Page;
 
+import com.techloghub.api.common.util.CollectionSupport;
+
 /**
  * offset 기반 목록 API의 공통 응답이다.
  *
@@ -23,7 +25,7 @@ public record PageResponse<T>(
 ) {
 	public static <T> PageResponse<T> from(Page<T> page) {
 		return new PageResponse<>(
-			List.copyOf(page.getContent()),
+			CollectionSupport.nullToEmptyList(page.getContent()),
 			page.getNumber(),
 			page.getSize(),
 			page.getTotalElements(),
@@ -33,7 +35,7 @@ public record PageResponse<T>(
 
 	public static <T> PageResponse<T> of(List<T> content, Page<?> page) {
 		return new PageResponse<>(
-			List.copyOf(content),
+			CollectionSupport.nullToEmptyList(content),
 			page.getNumber(),
 			page.getSize(),
 			page.getTotalElements(),

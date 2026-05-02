@@ -9,6 +9,8 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 
+import com.techloghub.api.common.util.StringNormalizer;
+
 import jakarta.validation.ConstraintViolation;
 
 /**
@@ -76,10 +78,11 @@ public class FieldErrorMapper {
 	}
 
 	private String safeReason(String reason) {
-		if (reason == null || reason.isBlank()) {
+		String normalizedReason = StringNormalizer.trimToNull(reason);
+		if (normalizedReason == null) {
 			return "요청 값이 올바르지 않습니다.";
 		}
-		return reason;
+		return normalizedReason;
 	}
 
 	private String safeRejectedValue(String field, Object rejectedValue) {
@@ -90,7 +93,7 @@ public class FieldErrorMapper {
 		if (value.length() <= MAX_REJECTED_VALUE_LENGTH) {
 			return value;
 		}
-		return value.substring(0, MAX_REJECTED_VALUE_LENGTH) + "...";
+		return StringNormalizer.truncate(value, MAX_REJECTED_VALUE_LENGTH) + "...";
 	}
 
 	private boolean isSensitiveField(String field) {

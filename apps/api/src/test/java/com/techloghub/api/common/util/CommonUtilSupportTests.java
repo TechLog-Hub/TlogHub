@@ -23,11 +23,20 @@ class CommonUtilSupportTests {
 		List<Item> items = List.of(new Item("a", 1), new Item("b", 2));
 
 		Map<String, Item> itemMap = CollectionSupport.toMapStrict(items, Item::key);
+		Map<String, Integer> valueMap = CollectionSupport.toValueMapStrict(items, Item::key, Item::value);
 		List<List<Item>> chunks = CollectionSupport.chunk(items, 1);
 
 		assertThat(itemMap).containsOnlyKeys("a", "b");
+		assertThat(valueMap).containsEntry("a", 1).containsEntry("b", 2);
 		assertThat(chunks).hasSize(2);
 		assertThatThrownBy(() -> CollectionSupport.toMapStrict(List.of(new Item("a", 1), new Item("a", 2)), Item::key))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessageContaining("중복 key");
+		assertThatThrownBy(() -> CollectionSupport.toValueMapStrict(
+			List.of(new Item("a", 1), new Item("a", 2)),
+			Item::key,
+			Item::value
+		))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining("중복 key");
 	}
