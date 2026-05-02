@@ -5,6 +5,11 @@ import static com.techloghub.api.common.domain.DomainGuard.requireNonNull;
 
 import com.techloghub.api.common.domain.BaseEntity;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -17,6 +22,10 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
 @Entity
+@Getter
+@Builder(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(
 	name = "topic_tag",
 	uniqueConstraints = {
@@ -24,6 +33,10 @@ import jakarta.persistence.UniqueConstraint;
 	}
 )
 public class TopicTag extends BaseEntity {
+
+	private static final int SLUG_MAX_LENGTH = 100;
+	private static final int LABEL_MAX_LENGTH = 100;
+	private static final int NORMALIZED_LABEL_MAX_LENGTH = 100;
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -46,14 +59,14 @@ public class TopicTag extends BaseEntity {
 	@JoinColumn(name = "merged_to_tag_id")
 	private TopicTag mergedToTag;
 
-	protected TopicTag() {
-	}
-
 	private TopicTag(String slug, String label, String normalizedLabel) {
 		this.slug = requireNonBlank(slug, "slug");
 		this.label = requireNonBlank(label, "label");
 		this.normalizedLabel = requireNonBlank(normalizedLabel, "normalizedLabel");
 		this.active = true;
+		validateSlugLength(this.slug);
+		validateLabelLength(this.label);
+		validateNormalizedLabelLength(this.normalizedLabel);
 	}
 
 	public static TopicTag create(String slug, String label, String normalizedLabel) {
@@ -63,6 +76,8 @@ public class TopicTag extends BaseEntity {
 	public void changeLabel(String label, String normalizedLabel) {
 		this.label = requireNonBlank(label, "label");
 		this.normalizedLabel = requireNonBlank(normalizedLabel, "normalizedLabel");
+		validateLabelLength(this.label);
+		validateNormalizedLabelLength(this.normalizedLabel);
 	}
 
 	public void mergeTo(TopicTag targetTag) {
@@ -83,27 +98,23 @@ public class TopicTag extends BaseEntity {
 		this.active = false;
 	}
 
-	public Long getId() {
-		return id;
+	private static void validateSlugLength(String value) {
+		if (value.length() > SLUG_MAX_LENGTH) {
+			throw new IllegalArgumentException("slug length must be <= " + SLUG_MAX_LENGTH);
+		}
 	}
 
-	public String getSlug() {
-		return slug;
+	private static void validateLabelLength(String value) {
+		if (value.length() > LABEL_MAX_LENGTH) {
+			throw new IllegalArgumentException("label length must be <= " + LABEL_MAX_LENGTH);
+		}
 	}
 
-	public String getLabel() {
-		return label;
-	}
-
-	public String getNormalizedLabel() {
-		return normalizedLabel;
-	}
-
-	public boolean isActive() {
-		return active;
-	}
-
-	public TopicTag getMergedToTag() {
-		return mergedToTag;
+	private static void validateNormalizedLabelLength(String value) {
+		if (value.length() > NORMALIZED_LABEL_MAX_LENGTH) {
+			throw new IllegalArgumentException(
+				"normalizedLabel length must be <= " + NORMALIZED_LABEL_MAX_LENGTH
+			);
+		}
 	}
 }

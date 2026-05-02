@@ -1,5 +1,6 @@
 package com.techloghub.api.subscription.domain;
 
+import static com.techloghub.api.common.domain.DomainGuard.requireBoolean;
 import static com.techloghub.api.common.domain.DomainGuard.requireNonBlank;
 import static com.techloghub.api.common.domain.DomainGuard.requireNonNull;
 
@@ -7,6 +8,11 @@ import java.time.Instant;
 
 import com.techloghub.api.common.domain.BaseEntity;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -20,6 +26,10 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
 @Entity
+@Getter
+@Builder(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(
 	name = "subscription_verification_request",
 	uniqueConstraints = {
@@ -49,9 +59,6 @@ public class SubscriptionVerificationRequest extends BaseEntity {
 	@Column(name = "used_at")
 	private Instant usedAt;
 
-	protected SubscriptionVerificationRequest() {
-	}
-
 	private SubscriptionVerificationRequest(Subscriber subscriber, String tokenHash, Instant expiresAt) {
 		this.subscriber = requireNonNull(subscriber, "subscriber");
 		this.tokenHash = requireNonBlank(tokenHash, "tokenHash");
@@ -63,7 +70,7 @@ public class SubscriptionVerificationRequest extends BaseEntity {
 	}
 
 	public boolean isExpired(Instant now) {
-		return expiresAt.isBefore(requireNonNull(now, "now"));
+		return !requireNonNull(now, "now").isBefore(expiresAt);
 	}
 
 	public boolean isUsed() {
@@ -71,29 +78,11 @@ public class SubscriptionVerificationRequest extends BaseEntity {
 	}
 
 	public void markUsed(Instant usedAt) {
-		if (isUsed()) {
-			throw new IllegalStateException("verification request already used");
-		}
+		requireBoolean(!isUsed(), "verification request already used");
 		this.usedAt = requireNonNull(usedAt, "usedAt");
 	}
 
-	public Long getId() {
-		return id;
-	}
-
-	public Subscriber getSubscriber() {
-		return subscriber;
-	}
-
-	public String getTokenHash() {
-		return tokenHash;
-	}
-
-	public Instant getExpiresAt() {
-		return expiresAt;
-	}
-
-	public Instant getUsedAt() {
-		return usedAt;
+	public void invalidate() {
+		this.usedAt = Instant.now();
 	}
 }

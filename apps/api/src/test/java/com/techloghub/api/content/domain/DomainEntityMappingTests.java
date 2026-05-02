@@ -98,7 +98,7 @@ class DomainEntityMappingTests {
 
 		AdminUser adminUser = AdminUser.create("admin@techloghub.local", "{noop}admin1234");
 		entityManager.persistAndFlush(adminUser);
-		entityManager.persist(AdminAuditLog.record(adminUser, "POST_PUBLISH", "archived_post", post.getId(), "{}", "{}", now));
+		entityManager.persist(AdminAuditLog.record(adminUser, "POST_PUBLISH", "archived_post", post.getId(), "{}", "{}"));
 
 		entityManager.flush();
 		entityManager.clear();
@@ -131,10 +131,10 @@ class DomainEntityMappingTests {
 			Instant.now()
 		);
 
-		post.requireReview("near duplicate candidate");
+		post.requestReview("near duplicate candidate");
 
 		assertThatThrownBy(post::publish)
-			.isInstanceOf(IllegalStateException.class)
+			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining("review required");
 	}
 }

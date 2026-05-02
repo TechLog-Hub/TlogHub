@@ -8,6 +8,11 @@ import java.time.Instant;
 
 import com.techloghub.api.common.domain.BaseEntity;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -23,6 +28,10 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
 @Entity
+@Getter
+@Builder(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(
 	name = "ai_summary",
 	uniqueConstraints = {
@@ -34,6 +43,10 @@ import jakarta.persistence.UniqueConstraint;
 )
 public class AiSummary extends BaseEntity {
 
+	private static final int HEADLINE_MAX_LENGTH = 500;
+	private static final int MODEL_NAME_MAX_LENGTH = 100;
+	private static final int PROMPT_VERSION_MAX_LENGTH = 100;
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id")
@@ -44,7 +57,7 @@ public class AiSummary extends BaseEntity {
 	private ArchivedPost archivedPost;
 
 	@Column(name = "version_no", nullable = false)
-	private int versionNo;
+	private int summaryVersion;
 
 	@Enumerated(EnumType.STRING)
 	@Column(name = "summary_state", nullable = false, length = 30)
@@ -71,43 +84,43 @@ public class AiSummary extends BaseEntity {
 	@Column(name = "failure_reason", columnDefinition = "text")
 	private String failureReason;
 
-	protected AiSummary() {
-	}
-
-	private AiSummary(ArchivedPost archivedPost, int versionNo, SummaryState summaryState) {
+	private AiSummary(ArchivedPost archivedPost, int version, SummaryState summaryState) {
 		this.archivedPost = requireNonNull(archivedPost, "archivedPost");
-		if (versionNo < 1) {
-			throw new IllegalArgumentException("versionNo must be positive");
+		if (version < 1) {
+			throw new IllegalArgumentException("version must be positive");
 		}
-		this.versionNo = versionNo;
+		this.summaryVersion = version;
 		this.summaryState = requireNonNull(summaryState, "summaryState");
 		this.current = true;
 	}
 
-	public static AiSummary pending(ArchivedPost archivedPost, int versionNo) {
-		return new AiSummary(archivedPost, versionNo, SummaryState.PENDING);
+	public static AiSummary pending(ArchivedPost archivedPost, int version) {
+		return new AiSummary(archivedPost, version, SummaryState.PENDING);
 	}
 
 	public static AiSummary ready(
 		ArchivedPost archivedPost,
-		int versionNo,
+		int version,
 		String headline,
 		String bulletsJson,
 		String modelName,
 		String promptVersion,
 		Instant generatedAt
 	) {
-		AiSummary summary = new AiSummary(archivedPost, versionNo, SummaryState.READY);
+		AiSummary summary = new AiSummary(archivedPost, version, SummaryState.READY);
 		summary.headline = requireNonBlank(headline, "headline");
 		summary.bulletsJson = requireNonBlank(bulletsJson, "bulletsJson");
 		summary.modelName = requireNonBlank(modelName, "modelName");
 		summary.promptVersion = requireNonBlank(promptVersion, "promptVersion");
 		summary.generatedAt = requireNonNull(generatedAt, "generatedAt");
+		validateHeadlineLength(summary.headline);
+		validateModelNameLength(summary.modelName);
+		validatePromptVersionLength(summary.promptVersion);
 		return summary;
 	}
 
-	public static AiSummary failed(ArchivedPost archivedPost, int versionNo, String failureReason) {
-		AiSummary summary = new AiSummary(archivedPost, versionNo, SummaryState.FAILED);
+	public static AiSummary failed(ArchivedPost archivedPost, int version, String failureReason) {
+		AiSummary summary = new AiSummary(archivedPost, version, SummaryState.FAILED);
 		summary.failureReason = requireNonBlank(failureReason, "failureReason");
 		return summary;
 	}
@@ -121,47 +134,41 @@ public class AiSummary extends BaseEntity {
 		this.current = false;
 	}
 
-	public Long getId() {
-		return id;
+	public void markReady(
+		String headline,
+		String bulletsJson,
+		String modelName,
+		String promptVersion,
+		Instant generatedAt
+	) {
+		this.summaryState = SummaryState.READY;
+		this.headline = requireNonBlank(headline, "headline");
+		this.bulletsJson = requireNonBlank(bulletsJson, "bulletsJson");
+		this.modelName = requireNonBlank(modelName, "modelName");
+		this.promptVersion = requireNonBlank(promptVersion, "promptVersion");
+		this.generatedAt = requireNonNull(generatedAt, "generatedAt");
+		this.failureReason = null;
+		this.current = true;
+		validateHeadlineLength(this.headline);
+		validateModelNameLength(this.modelName);
+		validatePromptVersionLength(this.promptVersion);
 	}
 
-	public ArchivedPost getArchivedPost() {
-		return archivedPost;
+	private static void validateHeadlineLength(String value) {
+		if (value.length() > HEADLINE_MAX_LENGTH) {
+			throw new IllegalArgumentException("headline length must be <= " + HEADLINE_MAX_LENGTH);
+		}
 	}
 
-	public int getVersionNo() {
-		return versionNo;
+	private static void validateModelNameLength(String value) {
+		if (value.length() > MODEL_NAME_MAX_LENGTH) {
+			throw new IllegalArgumentException("modelName length must be <= " + MODEL_NAME_MAX_LENGTH);
+		}
 	}
 
-	public SummaryState getSummaryState() {
-		return summaryState;
-	}
-
-	public String getHeadline() {
-		return headline;
-	}
-
-	public String getBulletsJson() {
-		return bulletsJson;
-	}
-
-	public String getModelName() {
-		return modelName;
-	}
-
-	public String getPromptVersion() {
-		return promptVersion;
-	}
-
-	public Instant getGeneratedAt() {
-		return generatedAt;
-	}
-
-	public boolean isCurrent() {
-		return current;
-	}
-
-	public String getFailureReason() {
-		return failureReason;
+	private static void validatePromptVersionLength(String value) {
+		if (value.length() > PROMPT_VERSION_MAX_LENGTH) {
+			throw new IllegalArgumentException("promptVersion length must be <= " + PROMPT_VERSION_MAX_LENGTH);
+		}
 	}
 }

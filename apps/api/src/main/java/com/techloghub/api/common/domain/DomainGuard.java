@@ -12,6 +12,16 @@ public final class DomainGuard {
 		return Objects.requireNonNull(value, fieldName + " must not be null");
 	}
 
+	public static String requireTrimmedNonBlank(String value, String fieldName) {
+		return requireNonBlank(value, fieldName).trim();
+	}
+
+	public static void requireBoolean(boolean condition, String message) {
+		if (!condition) {
+			throw new IllegalArgumentException(message);
+		}
+	}
+
 	public static String requireNonBlank(String value, String fieldName) {
 		if (value == null || value.isBlank()) {
 			throw new IllegalArgumentException(fieldName + " must not be blank");
@@ -32,5 +42,12 @@ public final class DomainGuard {
 			throw new IllegalArgumentException(fieldName + " must be less than or equal to " + maxSize);
 		}
 		return values;
+	}
+
+	public static int requireNonNegative(int value, String fieldName) {
+		if (value < 0) {
+			throw new IllegalArgumentException(fieldName + " must be greater than or equal to 0");
+		}
+		return value;
 	}
 }

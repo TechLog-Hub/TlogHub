@@ -5,6 +5,11 @@ import static com.techloghub.api.common.domain.DomainGuard.requireNonNull;
 import com.techloghub.api.common.domain.BaseEntity;
 import com.techloghub.api.content.domain.Company;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -18,6 +23,10 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
 @Entity
+@Getter
+@Builder(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(
 	name = "company_subscription",
 	uniqueConstraints = {
@@ -45,9 +54,6 @@ public class CompanySubscription extends BaseEntity {
 	@Column(name = "active", nullable = false)
 	private boolean active;
 
-	protected CompanySubscription() {
-	}
-
 	private CompanySubscription(Subscriber subscriber, Company company) {
 		this.subscriber = requireNonNull(subscriber, "subscriber");
 		this.company = requireNonNull(company, "company");
@@ -64,21 +70,5 @@ public class CompanySubscription extends BaseEntity {
 
 	public void unsubscribe() {
 		this.active = false;
-	}
-
-	public Long getId() {
-		return id;
-	}
-
-	public Subscriber getSubscriber() {
-		return subscriber;
-	}
-
-	public Company getCompany() {
-		return company;
-	}
-
-	public boolean isActive() {
-		return active;
 	}
 }
