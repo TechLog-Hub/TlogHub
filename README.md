@@ -100,6 +100,24 @@ npm install
 npm run validate:repo
 ```
 
+API는 `apps/api`의 Maven wrapper로 실행한다.
+
+```bash
+cd apps/api
+./mvnw test
+./mvnw spring-boot:run
+```
+
+Windows PowerShell에서는 다음 명령을 사용한다.
+
+```powershell
+cd apps/api
+.\mvnw.cmd test
+.\mvnw.cmd spring-boot:run
+```
+
+기본 API 주소는 `http://localhost:8080`이며, Actuator health endpoint는 `http://localhost:8080/actuator/health`다.
+
 Husky는 local Git hook을 설치한다. macOS와 Windows에서 동일하게 동작하도록 `.gitattributes`로 Husky hook과 Node.js 검증 스크립트의 LF line ending을 고정한다.
 
 CI와 production install에서는 `HUSKY=0`을 사용한다.
