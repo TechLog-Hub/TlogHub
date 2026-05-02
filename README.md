@@ -104,6 +104,14 @@ Husky는 local Git hook을 설치한다. macOS와 Windows에서 동일하게 동
 
 CI와 production install에서는 `HUSKY=0`을 사용한다.
 
+커밋 메시지 제목은 gitmoji와 한국어 요약을 함께 사용한다.
+
+```text
+✨ feat: 기업별 최신 글 목록을 추가한다
+📝 docs(readme): 서비스 소개를 보강한다
+🔧 chore(repo): 허스키 검증 규칙을 수정한다
+```
+
 ## 현재 상태
 
 - Wiki에 요구사항, 화면 설계, 백엔드/API/Batch/Search 테크스펙, 스프린트 계획이 정리되어 있다.

@@ -2,6 +2,19 @@ import { readFileSync } from 'node:fs';
 
 const messagePath = process.argv[2];
 const allowedTypes = ['feat', 'fix', 'docs', 'style', 'refactor', 'test', 'chore', 'build', 'ci', 'perf', 'hotfix'];
+const gitmojiByType = new Map([
+  ['feat', '✨'],
+  ['fix', '🐛'],
+  ['docs', '📝'],
+  ['style', '💄'],
+  ['refactor', '♻️'],
+  ['test', '✅'],
+  ['chore', '🔧'],
+  ['build', '📦'],
+  ['ci', '👷'],
+  ['perf', '⚡'],
+  ['hotfix', '🚑'],
+]);
 const requiredLabels = ['What changed:', 'Why:', 'Evidence:'];
 const forbiddenFragments = ['Co-authored-by:', 'Co-committed-by:', 'Generated with', 'Claude', 'Codex'];
 
@@ -21,10 +34,24 @@ if (/^(Merge|Revert|fixup!|squash!)/.test(subject)) {
   process.exit(0);
 }
 
+const gitmoji = [...gitmojiByType.values()].find((emoji) => subject.startsWith(`${emoji} `));
+const subjectWithoutGitmoji = gitmoji ? subject.slice(gitmoji.length + 1) : subject;
 const subjectPattern = new RegExp(`^(${allowedTypes.join('|')})(\\([a-z0-9-]+\\))?: .+$`);
+const subjectMatch = subjectWithoutGitmoji.match(subjectPattern);
 
-if (!subjectPattern.test(subject)) {
-  fail(`commit subject must match: <type>(optional-scope): <한국어 요약>\nactual: ${subject}`);
+if (!gitmoji) {
+  fail(`commit subject must start with a configured gitmoji and a space\nactual: ${subject}`);
+}
+
+if (!subjectMatch) {
+  fail(`commit subject must match: <gitmoji> <type>(optional-scope): <한국어 요약>\nactual: ${subject}`);
+}
+
+const [, type] = subjectMatch;
+const expectedGitmoji = gitmojiByType.get(type);
+
+if (gitmoji !== expectedGitmoji) {
+  fail(`commit subject gitmoji must match type "${type}": expected "${expectedGitmoji}"\nactual: ${subject}`);
 }
 
 if (!/[가-힣]/.test(subject)) {
