@@ -1,14 +1,19 @@
 package com.techloghub.api.subscription.api;
 
+import org.springframework.http.HttpHeaders;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.techloghub.api.common.error.BusinessException;
+import com.techloghub.api.common.error.CommonErrorCode;
+import com.techloghub.api.common.util.StringNormalizer;
 import com.techloghub.api.subscription.application.SubscriptionCommandService;
 import com.techloghub.api.subscription.dto.SubscriptionCompanyAddRequest;
 import com.techloghub.api.subscription.dto.SubscriptionManageResponse;
@@ -30,6 +35,8 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/v1/subscriptions")
 public class SubscriptionController {
 
+	private static final String BEARER_PREFIX = "Bearer ";
+
 	private final SubscriptionCommandService subscriptionCommandService;
 
 	@PostMapping("/requests")
@@ -42,29 +49,45 @@ public class SubscriptionController {
 		return subscriptionCommandService.verify(request.token());
 	}
 
-	@GetMapping("/manage/{manageToken}")
-	public SubscriptionManageResponse getManage(@PathVariable @NotBlank String manageToken) {
-		return subscriptionCommandService.getManage(manageToken);
+	@GetMapping("/manage")
+	public SubscriptionManageResponse getManage(
+		@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization
+	) {
+		return subscriptionCommandService.getManage(bearerToken(authorization));
 	}
 
-	@PostMapping("/manage/{manageToken}/companies")
+	@PostMapping("/manage/companies")
 	public SubscriptionManageResponse addCompanies(
-		@PathVariable @NotBlank String manageToken,
+		@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization,
 		@Valid @RequestBody SubscriptionCompanyAddRequest request
 	) {
-		return subscriptionCommandService.addCompanies(manageToken, request.companySlugs());
+		return subscriptionCommandService.addCompanies(bearerToken(authorization), request.companySlugs());
 	}
 
-	@DeleteMapping("/manage/{manageToken}/companies/{companySlug}")
+	@DeleteMapping("/manage/companies/{companySlug}")
 	public SubscriptionManageResponse removeCompany(
-		@PathVariable @NotBlank String manageToken,
+		@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization,
 		@PathVariable @NotBlank String companySlug
 	) {
-		return subscriptionCommandService.removeCompany(manageToken, companySlug);
+		return subscriptionCommandService.removeCompany(bearerToken(authorization), companySlug);
 	}
 
-	@PostMapping("/manage/{manageToken}/unsubscribe")
-	public SubscriptionManageResponse unsubscribe(@PathVariable @NotBlank String manageToken) {
-		return subscriptionCommandService.unsubscribe(manageToken);
+	@PostMapping("/manage/unsubscribe")
+	public SubscriptionManageResponse unsubscribe(
+		@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization
+	) {
+		return subscriptionCommandService.unsubscribe(bearerToken(authorization));
+	}
+
+	private String bearerToken(String authorization) {
+		String normalizedAuthorization = StringNormalizer.trimToNull(authorization);
+		if (normalizedAuthorization == null || !normalizedAuthorization.startsWith(BEARER_PREFIX)) {
+			throw new BusinessException(CommonErrorCode.UNAUTHORIZED);
+		}
+		String token = StringNormalizer.trimToNull(normalizedAuthorization.substring(BEARER_PREFIX.length()));
+		if (token == null) {
+			throw new BusinessException(CommonErrorCode.UNAUTHORIZED);
+		}
+		return token;
 	}
 }

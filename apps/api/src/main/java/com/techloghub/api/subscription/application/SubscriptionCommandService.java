@@ -8,6 +8,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -60,8 +61,7 @@ public class SubscriptionCommandService {
 		String normalizedEmail = normalizeEmail(email);
 		List<String> normalizedCompanySlugs = normalizeCompanySlugs(companySlugs);
 		List<Company> companies = findActiveCompanies(normalizedCompanySlugs);
-		Subscriber subscriber = subscriberRepository.findByEmail(normalizedEmail)
-			.orElseGet(() -> subscriberRepository.save(Subscriber.pending(normalizedEmail)));
+		Subscriber subscriber = findOrCreateSubscriber(normalizedEmail);
 		if (subscriber.getStatus() == SubscriberStatus.BOUNCED) {
 			throw new BusinessException(SubscriptionErrorCode.SUBSCRIPTION_NOT_ACTIVE);
 		}
@@ -117,12 +117,14 @@ public class SubscriptionCommandService {
 	public SubscriptionManageResponse addCompanies(String manageToken, List<String> companySlugs) {
 		Subscriber subscriber = findActiveSubscriberByManageToken(manageToken);
 		List<Company> companies = findActiveCompanies(normalizeCompanySlugs(companySlugs));
+		Map<String, CompanySubscription> existingSubscriptionMap = existingSubscriptionMap(subscriber);
 		for (Company company : companies) {
-			companySubscriptionRepository.findBySubscriber_IdAndCompany_Slug(subscriber.getId(), company.getSlug())
-				.ifPresentOrElse(
-					CompanySubscription::activate,
-					() -> companySubscriptionRepository.save(CompanySubscription.subscribe(subscriber, company))
-				);
+			CompanySubscription subscription = existingSubscriptionMap.get(company.getSlug());
+			if (subscription != null) {
+				subscription.activate();
+				continue;
+			}
+			companySubscriptionRepository.save(CompanySubscription.subscribe(subscriber, company));
 		}
 		return manageResponse(subscriber);
 	}
@@ -152,16 +154,16 @@ public class SubscriptionCommandService {
 			companySubscriptionRepository.deleteAll(inactiveSubscriptions);
 			companySubscriptionRepository.flush();
 		}
+		Map<String, CompanySubscription> existingSubscriptionMap = existingSubscriptionMap(subscriber);
 		for (Company company : companies) {
-			companySubscriptionRepository.findBySubscriber_IdAndCompany_Slug(subscriber.getId(), company.getSlug())
-				.ifPresentOrElse(
-					subscription -> {
-						if (subscriber.getStatus() != SubscriberStatus.ACTIVE) {
-							subscription.unsubscribe();
-						}
-					},
-					() -> companySubscriptionRepository.save(CompanySubscription.pending(subscriber, company))
-				);
+			CompanySubscription subscription = existingSubscriptionMap.get(company.getSlug());
+			if (subscription != null) {
+				if (subscriber.getStatus() != SubscriberStatus.ACTIVE) {
+					subscription.unsubscribe();
+				}
+				continue;
+			}
+			companySubscriptionRepository.save(CompanySubscription.pending(subscriber, company));
 		}
 	}
 
@@ -173,6 +175,29 @@ public class SubscriptionCommandService {
 	private void invalidatePreviousVerificationRequests(Subscriber subscriber) {
 		verificationRequestRepository.findBySubscriber_IdAndUsedAtIsNull(subscriber.getId())
 			.forEach(SubscriptionVerificationRequest::invalidate);
+	}
+
+	private Subscriber findOrCreateSubscriber(String normalizedEmail) {
+		return subscriberRepository.findByEmail(normalizedEmail)
+			.orElseGet(() -> createSubscriber(normalizedEmail));
+	}
+
+	private Subscriber createSubscriber(String normalizedEmail) {
+		try {
+			return subscriberRepository.saveAndFlush(Subscriber.pending(normalizedEmail));
+		} catch (DataIntegrityViolationException exception) {
+			return subscriberRepository.findByEmail(normalizedEmail)
+				.orElseThrow(() -> exception);
+		}
+	}
+
+	private Map<String, CompanySubscription> existingSubscriptionMap(Subscriber subscriber) {
+		List<CompanySubscription> existingSubscriptions = companySubscriptionRepository
+			.findBySubscriber_IdOrderByCompany_NameKoAsc(subscriber.getId());
+		return CollectionSupport.toMapStrict(
+			existingSubscriptions,
+			subscription -> subscription.getCompany().getSlug()
+		);
 	}
 
 	private Subscriber findActiveSubscriberByManageToken(String manageToken) {
