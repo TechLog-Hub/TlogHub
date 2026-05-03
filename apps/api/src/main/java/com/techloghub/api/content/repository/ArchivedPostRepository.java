@@ -11,7 +11,10 @@ import com.techloghub.api.content.domain.VisibilityState;
 /**
  * 아카이브 글의 공개 조회, 관리자 조회, 수집 중복 검사를 위한 영속성 조회 계약이다.
  */
-public interface ArchivedPostRepository extends JpaRepository<ArchivedPost, Long>, ArchivedPostQueryRepository {
+public interface ArchivedPostRepository extends
+	JpaRepository<ArchivedPost, Long>,
+	ArchivedPostQueryRepository,
+	AdminArchivedPostQueryRepository {
 
 	/**
 	 * 공개 상태를 함께 확인하며 slug로 글을 조회한다.

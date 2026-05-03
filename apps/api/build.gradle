@@ -24,6 +24,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.flywaydb:flyway-core'
     implementation 'org.flywaydb:flyway-database-postgresql'
+    implementation 'org.springframework.security:spring-security-crypto'
     implementation "com.querydsl:querydsl-jpa:${querydslVersion}:jakarta"
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor "com.querydsl:querydsl-apt:${querydslVersion}:jakarta"

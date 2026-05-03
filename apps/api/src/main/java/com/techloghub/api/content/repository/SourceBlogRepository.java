@@ -12,7 +12,7 @@ import com.techloghub.api.content.domain.SourceBlogStatus;
 /**
  * 기술 블로그 소스의 영속성 조회 계약이다.
  */
-public interface SourceBlogRepository extends JpaRepository<SourceBlog, Long> {
+public interface SourceBlogRepository extends JpaRepository<SourceBlog, Long>, AdminSourceBlogQueryRepository {
 
 	/**
 	 * feed URL로 소스를 조회한다.

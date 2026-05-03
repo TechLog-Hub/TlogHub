@@ -3,6 +3,8 @@ package com.techloghub.api.admin.domain;
 import static com.techloghub.api.common.domain.DomainGuard.requireNonBlank;
 import static com.techloghub.api.common.domain.DomainGuard.requireNonNull;
 
+import java.time.Instant;
+
 import com.techloghub.api.common.domain.BaseEntity;
 
 import lombok.AccessLevel;
@@ -54,6 +56,15 @@ public class AdminUser extends BaseEntity {
 	@Column(name = "active", nullable = false)
 	private boolean active;
 
+	@Column(name = "session_token_hash", length = 128)
+	private String sessionTokenHash;
+
+	@Column(name = "session_issued_at")
+	private Instant sessionIssuedAt;
+
+	@Column(name = "session_expires_at")
+	private Instant sessionExpiresAt;
+
 	private AdminUser(String email, String passwordHash, AdminRole role) {
 		this.email = requireNonBlank(email, "email").toLowerCase();
 		this.passwordHash = requireNonBlank(passwordHash, "passwordHash");
@@ -78,10 +89,30 @@ public class AdminUser extends BaseEntity {
 
 	public void deactivate() {
 		this.active = false;
+		clearSession();
 	}
 
 	public void promote(AdminRole role) {
 		this.role = requireNonNull(role, "role");
+	}
+
+	public void issueSession(String sessionTokenHash, Instant issuedAt, Instant expiresAt) {
+		this.sessionTokenHash = requireNonBlank(sessionTokenHash, "sessionTokenHash");
+		this.sessionIssuedAt = requireNonNull(issuedAt, "issuedAt");
+		this.sessionExpiresAt = requireNonNull(expiresAt, "expiresAt");
+	}
+
+	public void clearSession() {
+		this.sessionTokenHash = null;
+		this.sessionIssuedAt = null;
+		this.sessionExpiresAt = null;
+	}
+
+	public boolean hasValidSession(Instant now) {
+		return active
+			&& sessionTokenHash != null
+			&& sessionExpiresAt != null
+			&& requireNonNull(now, "now").isBefore(sessionExpiresAt);
 	}
 
 	private static void validateEmailLength(String value) {
