@@ -20,6 +20,14 @@ public interface AdminUserRepository extends JpaRepository<AdminUser, Long> {
 	Optional<AdminUser> findByEmail(String email);
 
 	/**
+	 * session token hash로 관리자 계정을 조회한다.
+	 *
+	 * @param sessionTokenHash session token hash
+	 * @return 조회된 관리자 계정
+	 */
+	Optional<AdminUser> findBySessionTokenHash(String sessionTokenHash);
+
+	/**
 	 * 이메일 중복 여부를 확인한다.
 	 *
 	 * @param email 이메일

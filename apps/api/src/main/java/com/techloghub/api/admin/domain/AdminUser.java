@@ -3,6 +3,9 @@ package com.techloghub.api.admin.domain;
 import static com.techloghub.api.common.domain.DomainGuard.requireNonBlank;
 import static com.techloghub.api.common.domain.DomainGuard.requireNonNull;
 
+import java.time.Duration;
+import java.time.Instant;
+
 import com.techloghub.api.common.domain.BaseEntity;
 
 import lombok.AccessLevel;
@@ -54,11 +57,27 @@ public class AdminUser extends BaseEntity {
 	@Column(name = "active", nullable = false)
 	private boolean active;
 
+	@Column(name = "session_token_hash", length = 128)
+	private String sessionTokenHash;
+
+	@Column(name = "session_issued_at")
+	private Instant sessionIssuedAt;
+
+	@Column(name = "session_expires_at")
+	private Instant sessionExpiresAt;
+
+	@Column(name = "failed_login_count", nullable = false)
+	private int failedLoginCount;
+
+	@Column(name = "login_locked_until")
+	private Instant loginLockedUntil;
+
 	private AdminUser(String email, String passwordHash, AdminRole role) {
 		this.email = requireNonBlank(email, "email").toLowerCase();
 		this.passwordHash = requireNonBlank(passwordHash, "passwordHash");
 		this.role = requireNonNull(role, "role");
 		this.active = true;
+		this.failedLoginCount = 0;
 		validateEmailLength(this.email);
 		validatePasswordHashLength(this.passwordHash);
 	}
@@ -78,10 +97,55 @@ public class AdminUser extends BaseEntity {
 
 	public void deactivate() {
 		this.active = false;
+		clearSession();
 	}
 
 	public void promote(AdminRole role) {
 		this.role = requireNonNull(role, "role");
+	}
+
+	public void issueSession(String sessionTokenHash, Instant issuedAt, Instant expiresAt) {
+		this.sessionTokenHash = requireNonBlank(sessionTokenHash, "sessionTokenHash");
+		this.sessionIssuedAt = requireNonNull(issuedAt, "issuedAt");
+		this.sessionExpiresAt = requireNonNull(expiresAt, "expiresAt");
+	}
+
+	public void clearSession() {
+		this.sessionTokenHash = null;
+		this.sessionIssuedAt = null;
+		this.sessionExpiresAt = null;
+	}
+
+	public boolean hasValidSession(Instant now) {
+		return active
+			&& sessionTokenHash != null
+			&& sessionExpiresAt != null
+			&& requireNonNull(now, "now").isBefore(sessionExpiresAt);
+	}
+
+	public void recordLoginFailure(Instant now, int maxFailedLoginAttempts, Duration lockDuration) {
+		requireNonNull(now, "now");
+		requireNonNull(lockDuration, "lockDuration");
+		if (maxFailedLoginAttempts < 1) {
+			throw new IllegalArgumentException("maxFailedLoginAttempts must be >= 1");
+		}
+		if (loginLockedUntil != null && !now.isBefore(loginLockedUntil)) {
+			failedLoginCount = 0;
+			loginLockedUntil = null;
+		}
+		failedLoginCount += 1;
+		if (failedLoginCount >= maxFailedLoginAttempts) {
+			loginLockedUntil = now.plus(lockDuration);
+		}
+	}
+
+	public void clearLoginFailures() {
+		failedLoginCount = 0;
+		loginLockedUntil = null;
+	}
+
+	public boolean isLoginLocked(Instant now) {
+		return loginLockedUntil != null && requireNonNull(now, "now").isBefore(loginLockedUntil);
 	}
 
 	private static void validateEmailLength(String value) {
