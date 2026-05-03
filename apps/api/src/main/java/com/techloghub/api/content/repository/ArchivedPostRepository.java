@@ -1,5 +1,7 @@
 package com.techloghub.api.content.repository;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -44,10 +46,26 @@ public interface ArchivedPostRepository extends
 	Optional<ArchivedPost> findByCanonicalFingerprint(String canonicalFingerprint);
 
 	/**
+	 * canonical fingerprint 목록으로 글을 일괄 조회한다.
+	 *
+	 * @param canonicalFingerprints 정규화 fingerprint 목록
+	 * @return 조회된 글 목록
+	 */
+	List<ArchivedPost> findByCanonicalFingerprintIn(Collection<String> canonicalFingerprints);
+
+	/**
 	 * canonical fingerprint 중복 여부를 확인한다.
 	 *
 	 * @param canonicalFingerprint 정규화 fingerprint
 	 * @return 존재하면 true
 	 */
 	boolean existsByCanonicalFingerprint(String canonicalFingerprint);
+
+	/**
+	 * slug 중복 여부를 확인한다.
+	 *
+	 * @param slug 글 slug
+	 * @return 존재하면 true
+	 */
+	boolean existsBySlug(String slug);
 }

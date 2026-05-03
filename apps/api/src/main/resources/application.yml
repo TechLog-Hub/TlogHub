@@ -1,6 +1,11 @@
 spring:
   application:
     name: tlog-api
+  batch:
+    job:
+      enabled: false
+    jdbc:
+      initialize-schema: never
   cache:
     cache-names:
       - public-filter-metadata
@@ -32,6 +37,14 @@ server:
     include-exception: false
 
 techlog:
+  batch:
+    schedule-enabled: ${TECHLOG_BATCH_SCHEDULE_ENABLED:false}
+    collect-cron: ${TECHLOG_BATCH_COLLECT_CRON:0 */30 * * * *}
+    max-entries-per-source: ${TECHLOG_BATCH_MAX_ENTRIES_PER_SOURCE:50}
+    max-feed-response-bytes: ${TECHLOG_BATCH_MAX_FEED_RESPONSE_BYTES:2097152}
+    feed-connect-timeout: ${TECHLOG_BATCH_FEED_CONNECT_TIMEOUT:3s}
+    feed-read-timeout: ${TECHLOG_BATCH_FEED_READ_TIMEOUT:10s}
+    user-agent: ${TECHLOG_BATCH_USER_AGENT:TechlogHubBot/0.1}
   subscription:
     verification-token-ttl: ${TECHLOG_SUBSCRIPTION_VERIFICATION_TOKEN_TTL:PT24H}
     expose-dev-tokens: ${TECHLOG_SUBSCRIPTION_EXPOSE_DEV_TOKENS:false}
