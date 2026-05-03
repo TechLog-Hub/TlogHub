@@ -1,11 +1,13 @@
 package com.techloghub.api.content.repository;
 
+import static com.techloghub.api.testsupport.TestTags.INTEGRATION;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -33,6 +35,7 @@ import com.techloghub.api.content.domain.VisibilityState;
 @ActiveProfiles("test")
 @DataJpaTest
 @Import({JpaAuditingConfiguration.class, QueryDslConfiguration.class})
+@Tag(INTEGRATION)
 class ContentRepositoryTests {
 
 	@Autowired

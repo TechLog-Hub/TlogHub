@@ -1,4 +1,5 @@
 import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 
 const forbiddenStagedPrefixes = ['docs/', 'review/', '검토-필요/'];
 const forbiddenStagedPatterns = [
@@ -130,6 +131,9 @@ const stagedFiles = git(['diff', '--cached', '--name-only', '--diff-filter=ACMR'
   .map((file) => file.trim())
   .filter(Boolean);
 
+const javaTestFilePattern = /^apps\/api\/src\/test\/java\/.+Tests?\.java$/;
+const validJUnitTagPattern = /@Tag\(\s*(?:(?:TestTags\.)?(?:UNIT|INTEGRATION)|['"](?:unit|integration)['"])\s*\)/;
+
 const forbiddenFiles = stagedFiles.filter((file) =>
   forbiddenStagedPrefixes.some((prefix) => file.startsWith(prefix)),
 );
@@ -148,6 +152,18 @@ if (forbiddenPatternFiles.length > 0) {
   fail(
     `forbidden staged files:\n${forbiddenPatternFiles
       .map(({ file, reason }) => `- ${file}: ${reason}`)
+      .join('\n')}`,
+  );
+}
+
+const untaggedTestFiles = stagedFiles
+  .filter((file) => javaTestFilePattern.test(file))
+  .filter((file) => !validJUnitTagPattern.test(readFileSync(file, 'utf8')));
+
+if (untaggedTestFiles.length > 0) {
+  fail(
+    `test classes must declare a valid JUnit @Tag(unit|integration):\n${untaggedTestFiles
+      .map((file) => `- ${file}`)
       .join('\n')}`,
   );
 }

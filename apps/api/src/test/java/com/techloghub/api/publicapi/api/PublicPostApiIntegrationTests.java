@@ -1,5 +1,6 @@
 package com.techloghub.api.publicapi.api;
 
+import static com.techloghub.api.testsupport.TestTags.INTEGRATION;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -8,6 +9,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -34,6 +36,7 @@ import com.techloghub.api.content.repository.TopicTagRepository;
 @ActiveProfiles("test")
 @SpringBootTest
 @AutoConfigureMockMvc
+@Tag(INTEGRATION)
 class PublicPostApiIntegrationTests {
 
 	@Autowired
