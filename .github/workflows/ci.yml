@@ -93,6 +93,31 @@ jobs:
       - name: Run integration tests
         run: ./gradlew :apps:api:integrationTest --build-cache --configuration-cache --no-daemon
 
+  web-build:
+    name: Web Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck web
+        run: npm run web:typecheck
+
+      - name: Build web
+        run: npm run web:build
+
   security-scan:
     name: Security Scan
     runs-on: ubuntu-latest
@@ -139,6 +164,7 @@ jobs:
       - policy-check
       - unit-test
       - integration-test
+      - web-build
       - security-scan
     if: ${{ always() }}
     permissions:
@@ -156,15 +182,16 @@ jobs:
           POLICY_RESULT: ${{ needs.policy-check.result }}
           UNIT_RESULT: ${{ needs.unit-test.result }}
           INTEGRATION_RESULT: ${{ needs.integration-test.result }}
+          WEB_RESULT: ${{ needs.web-build.result }}
           SECURITY_RESULT: ${{ needs.security-scan.result }}
           REPOSITORY: ${{ github.repository }}
           REF_NAME: ${{ github.ref_name }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          if [[ "${POLICY_RESULT}${UNIT_RESULT}${INTEGRATION_RESULT}${SECURITY_RESULT}" == *"failure"* ]]; then
+          if [[ "${POLICY_RESULT}${UNIT_RESULT}${INTEGRATION_RESULT}${WEB_RESULT}${SECURITY_RESULT}" == *"failure"* ]]; then
             STATUS="failed"
             COLOR=15158332
-          elif [[ "${POLICY_RESULT}${UNIT_RESULT}${INTEGRATION_RESULT}${SECURITY_RESULT}" == *"cancelled"* ]]; then
+          elif [[ "${POLICY_RESULT}${UNIT_RESULT}${INTEGRATION_RESULT}${WEB_RESULT}${SECURITY_RESULT}" == *"cancelled"* ]]; then
             STATUS="cancelled"
             COLOR=9807270
           else
@@ -180,6 +207,7 @@ jobs:
             --arg policy "${POLICY_RESULT}" \
             --arg unit "${UNIT_RESULT}" \
             --arg integration "${INTEGRATION_RESULT}" \
+            --arg web "${WEB_RESULT}" \
             --arg security "${SECURITY_RESULT}" \
             --argjson color "${COLOR}" \
             '{
@@ -192,6 +220,7 @@ jobs:
                   {name: "policy-check", value: $policy, inline: true},
                   {name: "unit-test", value: $unit, inline: true},
                   {name: "integration-test", value: $integration, inline: true},
+                  {name: "web-build", value: $web, inline: true},
                   {name: "security-scan", value: $security, inline: true},
                   {name: "Run", value: $url, inline: false}
                 ]
