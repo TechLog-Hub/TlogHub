@@ -39,6 +39,33 @@ dependencies {
     testAnnotationProcessor 'org.projectlombok:lombok'
 }
 
-tasks.named('test') {
-    useJUnitPlatform()
+tasks.named('test', Test) {
+    useJUnitPlatform {
+        excludeTags 'integration'
+    }
+}
+
+tasks.register('unitTest', Test) {
+    group = 'verification'
+    description = 'Runs unit tests only.'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    useJUnitPlatform {
+        includeTags 'unit'
+    }
+}
+
+tasks.register('integrationTest', Test) {
+    group = 'verification'
+    description = 'Runs integration tests only.'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    shouldRunAfter tasks.named('test')
+    useJUnitPlatform {
+        includeTags 'integration'
+    }
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('integrationTest')
 }

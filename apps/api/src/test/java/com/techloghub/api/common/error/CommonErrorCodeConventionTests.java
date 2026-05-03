@@ -1,13 +1,16 @@
 package com.techloghub.api.common.error;
 
+import static com.techloghub.api.testsupport.TestTags.UNIT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+@Tag(UNIT)
 class CommonErrorCodeConventionTests {
 
 	private static final Pattern ERROR_CODE_PATTERN = Pattern.compile("^[A-Z][A-Z0-9_]*$");

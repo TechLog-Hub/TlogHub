@@ -6,7 +6,12 @@
   "scripts": {
     "prepare": "husky || true",
     "validate:repo": "node scripts/validate-repo.mjs",
-    "validate:commit-message": "node scripts/validate-commit-message.mjs"
+    "validate:repo:ci": "node scripts/validate-repo-ci.mjs",
+    "validate:commit-message": "node scripts/validate-commit-message.mjs",
+    "gradle": "node scripts/run-gradle.mjs",
+    "test:unit": "node scripts/run-gradle.mjs :apps:api:unitTest --build-cache --configuration-cache",
+    "test:integration": "node scripts/run-gradle.mjs :apps:api:integrationTest --build-cache --configuration-cache",
+    "security:secrets": "node scripts/scan-secrets.mjs"
   },
   "devDependencies": {
     "husky": "9.1.7"

@@ -1,13 +1,16 @@
 package com.techloghub.api.common.util;
 
+import static com.techloghub.api.testsupport.TestTags.UNIT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
 import java.util.Map;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+@Tag(UNIT)
 class CommonUtilSupportTests {
 
 	@Test

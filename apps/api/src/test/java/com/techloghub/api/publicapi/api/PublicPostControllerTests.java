@@ -1,5 +1,6 @@
 package com.techloghub.api.publicapi.api;
 
+import static com.techloghub.api.testsupport.TestTags.INTEGRATION;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -11,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.time.Instant;
 import java.util.List;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +36,7 @@ import com.techloghub.api.publicapi.dto.PublicTopicTagFilterResponse;
 import com.techloghub.api.publicapi.error.PublicApiErrorCode;
 
 @WebMvcTest(PublicPostController.class)
+@Tag(INTEGRATION)
 class PublicPostControllerTests {
 
 	@Autowired

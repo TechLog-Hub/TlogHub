@@ -1,4 +1,5 @@
 import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 
 const forbiddenStagedPrefixes = ['docs/', 'review/', '검토-필요/'];
 const forbiddenStagedPatterns = [
@@ -150,6 +151,14 @@ if (forbiddenPatternFiles.length > 0) {
       .map(({ file, reason }) => `- ${file}: ${reason}`)
       .join('\n')}`,
   );
+}
+
+const untaggedTestFiles = stagedFiles
+  .filter((file) => /^apps\/api\/src\/test\/java\/.+Tests\.java$/.test(file))
+  .filter((file) => !readFileSync(file, 'utf8').includes('@Tag('));
+
+if (untaggedTestFiles.length > 0) {
+  fail(`test classes must declare a JUnit @Tag:\n${untaggedTestFiles.map((file) => `- ${file}`).join('\n')}`);
 }
 
 console.log('repository validation passed');

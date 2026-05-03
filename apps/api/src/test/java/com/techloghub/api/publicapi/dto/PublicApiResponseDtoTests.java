@@ -1,11 +1,14 @@
 package com.techloghub.api.publicapi.dto;
 
+import static com.techloghub.api.testsupport.TestTags.UNIT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Instant;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+@Tag(UNIT)
 class PublicApiResponseDtoTests {
 
 	@Test
