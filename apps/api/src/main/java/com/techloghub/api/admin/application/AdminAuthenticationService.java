@@ -102,7 +102,9 @@ public class AdminAuthenticationService {
 	}
 
 	public void logout(AdminUser adminUser) {
-		AdminUser targetAdminUser = adminUserRepository.findById(adminUser.getId())
+		AdminUser targetAdminUser = Optional.ofNullable(adminUser)
+			.map(AdminUser::getId)
+			.flatMap(adminUserRepository::findById)
 			.filter(AdminUser::isActive)
 			.orElseThrow(() -> new BusinessException(AdminErrorCode.ADMIN_SESSION_INVALID));
 		targetAdminUser.clearSession();

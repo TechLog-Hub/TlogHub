@@ -2,6 +2,7 @@ package com.techloghub.api.admin.api;
 
 import static com.techloghub.api.testsupport.TestTags.INTEGRATION;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -21,9 +22,12 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.techloghub.api.admin.application.AdminAuthenticationService;
 import com.techloghub.api.admin.domain.AdminUser;
+import com.techloghub.api.admin.error.AdminErrorCode;
 import com.techloghub.api.admin.repository.AdminAuditLogRepository;
 import com.techloghub.api.admin.repository.AdminUserRepository;
+import com.techloghub.api.common.error.BusinessException;
 
 @ActiveProfiles("test")
 @SpringBootTest
@@ -42,6 +46,9 @@ class AdminAuthenticationPersistenceIntegrationTests {
 
 	@Autowired
 	private BCryptPasswordEncoder adminPasswordEncoder;
+
+	@Autowired
+	private AdminAuthenticationService adminAuthenticationService;
 
 	@Autowired
 	private AdminAuditLogRepository adminAuditLogRepository;
@@ -90,6 +97,21 @@ class AdminAuthenticationPersistenceIntegrationTests {
 		assertThat(persistedAdminUser.getSessionTokenHash()).isNull();
 		assertThat(persistedAdminUser.getSessionIssuedAt()).isNull();
 		assertThat(persistedAdminUser.getSessionExpiresAt()).isNull();
+	}
+
+	@Test
+	void logoutRejectsMissingAdminPrincipalAsInvalidSession() {
+		assertThatThrownBy(() -> adminAuthenticationService.logout((AdminUser)null))
+			.isInstanceOf(BusinessException.class)
+			.extracting(exception -> ((BusinessException)exception).getErrorCode())
+			.isEqualTo(AdminErrorCode.ADMIN_SESSION_INVALID);
+
+		AdminUser unsavedAdminUser = AdminUser.create(ADMIN_EMAIL, adminPasswordEncoder.encode(ADMIN_PASSWORD));
+
+		assertThatThrownBy(() -> adminAuthenticationService.logout(unsavedAdminUser))
+			.isInstanceOf(BusinessException.class)
+			.extracting(exception -> ((BusinessException)exception).getErrorCode())
+			.isEqualTo(AdminErrorCode.ADMIN_SESSION_INVALID);
 	}
 
 	private String readText(String json, String fieldName) throws Exception {
