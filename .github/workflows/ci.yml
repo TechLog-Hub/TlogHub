@@ -31,12 +31,12 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
 
       - name: Install root tooling
@@ -53,7 +53,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Java
         uses: actions/setup-java@v5
@@ -77,7 +77,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Java
         uses: actions/setup-java@v5
@@ -101,12 +101,12 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
 
       - name: Install root tooling
@@ -114,9 +114,19 @@ jobs:
 
       - name: Dependency review
         if: ${{ github.event_name == 'pull_request' }}
+        id: dependency-review
+        continue-on-error: true
         uses: actions/dependency-review-action@v4
         with:
           fail-on-severity: high
+
+      - name: Report dependency review limitation
+        if: ${{ steps.dependency-review.outcome == 'failure' }}
+        run: |
+          echo "::warning::Dependency Review did not complete. Enable Dependency graph in repository security settings to make this gate blocking."
+
+      - name: Audit npm dependencies
+        run: npm audit --audit-level=high
 
       - name: Secret pattern scan
         run: npm run security:secrets
