@@ -64,6 +64,12 @@ public class CompanySubscription extends BaseEntity {
 		return new CompanySubscription(subscriber, company);
 	}
 
+	public static CompanySubscription pending(Subscriber subscriber, Company company) {
+		CompanySubscription subscription = new CompanySubscription(subscriber, company);
+		subscription.unsubscribe();
+		return subscription;
+	}
+
 	public void activate() {
 		this.active = true;
 	}

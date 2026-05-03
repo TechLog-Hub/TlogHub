@@ -36,4 +36,13 @@ public interface CompanyRepository extends JpaRepository<Company, Long> {
 	 * @return 기업 목록
 	 */
 	List<Company> findByStatusOrderByNameKoAsc(CompanyStatus status);
+
+	/**
+	 * slug 목록과 상태로 기업 목록을 조회한다.
+	 *
+	 * @param slugs 기업 slug 목록
+	 * @param status 기업 상태
+	 * @return 기업 목록
+	 */
+	List<Company> findBySlugInAndStatus(List<String> slugs, CompanyStatus status);
 }
