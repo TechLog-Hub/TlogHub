@@ -31,6 +31,16 @@ public enum AdminErrorCode implements ErrorCode {
 		HttpStatus.NOT_FOUND,
 		"ADMIN_POST_NOT_FOUND",
 		"관리자 글 정보를 찾을 수 없습니다."
+	),
+	ADMIN_BATCH_JOB_ALREADY_RUNNING(
+		HttpStatus.CONFLICT,
+		"ADMIN_BATCH_JOB_ALREADY_RUNNING",
+		"이미 실행 중인 관리자 작업이 있습니다."
+	),
+	ADMIN_BATCH_JOB_LAUNCH_FAILED(
+		HttpStatus.INTERNAL_SERVER_ERROR,
+		"ADMIN_BATCH_JOB_LAUNCH_FAILED",
+		"관리자 작업 실행에 실패했습니다."
 	);
 
 	private final HttpStatus httpStatus;

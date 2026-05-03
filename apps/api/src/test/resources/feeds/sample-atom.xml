@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Naver D2</title>
+  <link href="https://d2.naver.com"/>
+  <updated>2026-05-02T10:30:00Z</updated>
+  <entry>
+    <title>JVM GC 튜닝 사례</title>
+    <link rel="alternate" href="https://d2.naver.com/helloworld/1234"/>
+    <link rel="canonical" href="https://d2.naver.com/helloworld/1234"/>
+    <id>https://d2.naver.com/helloworld/1234</id>
+    <published>2026-05-02T10:20:00Z</published>
+    <summary type="html">&lt;p&gt;JVM GC 튜닝 사례를 소개합니다.&lt;/p&gt;</summary>
+  </entry>
+</feed>

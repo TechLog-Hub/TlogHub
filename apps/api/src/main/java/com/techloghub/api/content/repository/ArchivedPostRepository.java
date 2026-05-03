@@ -50,4 +50,12 @@ public interface ArchivedPostRepository extends
 	 * @return 존재하면 true
 	 */
 	boolean existsByCanonicalFingerprint(String canonicalFingerprint);
+
+	/**
+	 * slug 중복 여부를 확인한다.
+	 *
+	 * @param slug 글 slug
+	 * @return 존재하면 true
+	 */
+	boolean existsBySlug(String slug);
 }

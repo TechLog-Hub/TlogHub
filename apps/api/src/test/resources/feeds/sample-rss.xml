@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Toss Tech</title>
+    <link>https://toss.tech</link>
+    <description>Toss technical blog</description>
+    <item>
+      <title>Spring Boot 운영 경험</title>
+      <link>https://toss.tech/article/spring-boot?utm_source=rss</link>
+      <guid isPermaLink="true">https://toss.tech/article/spring-boot</guid>
+      <pubDate>Sat, 02 May 2026 09:30:00 GMT</pubDate>
+      <description><![CDATA[<p>Spring Boot 운영 경험을 정리합니다.</p>]]></description>
+    </item>
+    <item>
+      <title>Kafka consumer lag 대응</title>
+      <link>https://toss.tech/article/kafka-lag</link>
+      <pubDate>Sat, 02 May 2026 10:00:00 GMT</pubDate>
+      <description><![CDATA[<p>Kafka lag 원인과 대응을 설명합니다.</p>]]></description>
+    </item>
+  </channel>
+</rss>

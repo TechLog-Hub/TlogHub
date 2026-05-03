@@ -40,6 +40,15 @@ public interface SourceBlogRepository extends JpaRepository<SourceBlog, Long>, A
 	List<SourceBlog> findByStatusOrderByIdAsc(SourceBlogStatus status);
 
 	/**
+	 * 수집 저장에 필요한 기업 정보를 함께 조회한다.
+	 *
+	 * @param id 소스 ID
+	 * @return 기업이 함께 로딩된 소스
+	 */
+	@EntityGraph(attributePaths = "company")
+	Optional<SourceBlog> findWithCompanyById(Long id);
+
+	/**
 	 * 기업 slug 기준으로 소스 목록을 조회한다.
 	 *
 	 * @param companySlug 기업 slug
