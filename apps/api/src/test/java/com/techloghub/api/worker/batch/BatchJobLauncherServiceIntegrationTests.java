@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.explore.JobExplorer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -55,6 +56,9 @@ class BatchJobLauncherServiceIntegrationTests {
 	private ApplicationContext applicationContext;
 
 	@Autowired
+	private JobExplorer jobExplorer;
+
+	@Autowired
 	private StubFeedClient stubFeedClient;
 
 	@Autowired
@@ -93,7 +97,7 @@ class BatchJobLauncherServiceIntegrationTests {
 
 	@Test
 	@DisplayName("수동 RSS 수집 Batch job을 실행하면 승인 source를 수집하고 COMPLETED 상태로 종료한다")
-	void runRssFeedCollection_approvedSource_completesJob() {
+	void runRssFeedCollection_approvedSource_completesJob() throws Exception {
 		sourceBlogRepository.saveAndFlush(approvedSource());
 		stubFeedClient.success(FEED_URL, List.of(new FeedEntryCandidate(
 			"Spring Batch 운영",
@@ -104,8 +108,9 @@ class BatchJobLauncherServiceIntegrationTests {
 		)));
 
 		JobExecution jobExecution = batchJobLauncherService.runRssFeedCollection("test", "manual");
+		JobExecution completedJobExecution = awaitCompletion(jobExecution.getId());
 
-		assertThat(jobExecution.getStatus()).isEqualTo(BatchStatus.COMPLETED);
+		assertThat(completedJobExecution.getStatus()).isEqualTo(BatchStatus.COMPLETED);
 		assertThat(archivedPostRepository.count()).isEqualTo(1);
 		assertThat(collectionRunRepository.count()).isEqualTo(1);
 	}
@@ -127,6 +132,17 @@ class BatchJobLauncherServiceIntegrationTests {
 		);
 		sourceBlog.approve();
 		return sourceBlog;
+	}
+
+	private JobExecution awaitCompletion(Long executionId) throws Exception {
+		for (int attempt = 0; attempt < 100; attempt++) {
+			JobExecution jobExecution = jobExplorer.getJobExecution(executionId);
+			if (jobExecution != null && !jobExecution.getStatus().isRunning()) {
+				return jobExecution;
+			}
+			Thread.sleep(50);
+		}
+		throw new AssertionError("batch job did not finish: " + executionId);
 	}
 
 	@TestConfiguration

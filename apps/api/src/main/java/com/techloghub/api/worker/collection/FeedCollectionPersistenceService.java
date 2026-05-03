@@ -1,7 +1,12 @@
 package com.techloghub.api.worker.collection;
 
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -40,6 +45,8 @@ public class FeedCollectionPersistenceService {
 
 	@Transactional(propagation = Propagation.REQUIRES_NEW)
 	public FeedCollectionTarget prepare(Long sourceBlogId, Instant startedAt) {
+		Objects.requireNonNull(sourceBlogId, "sourceBlogId must not be null");
+		Objects.requireNonNull(startedAt, "startedAt must not be null");
 		SourceBlog sourceBlog = getSourceBlog(sourceBlogId);
 		CollectionRun collectionRun = collectionRunRepository.save(CollectionRun.start(sourceBlog, startedAt));
 		return new FeedCollectionTarget(sourceBlog.getId(), collectionRun.getId(), sourceBlog.getFeedUrl());
@@ -51,33 +58,36 @@ public class FeedCollectionPersistenceService {
 		List<FeedEntryCandidate> candidates,
 		Instant finishedAt
 	) {
+		Objects.requireNonNull(target, "target must not be null");
+		Objects.requireNonNull(candidates, "candidates must not be null");
+		Objects.requireNonNull(finishedAt, "finishedAt must not be null");
 		SourceBlog sourceBlog = getSourceBlog(target.sourceBlogId());
 		CollectionRun collectionRun = getCollectionRun(target.collectionRunId());
 
-		int collectedCount = 0;
+		CandidateFingerprintGroup fingerprintGroup = CandidateFingerprintGroup.from(candidates, canonicalFingerprintGenerator);
+		Map<String, ArchivedPost> archivedPostsByFingerprint = findArchivedPostsByFingerprint(fingerprintGroup.fingerprints());
+		Set<String> existingOriginUrls = findExistingOriginUrls(sourceBlog.getId(), fingerprintGroup.originUrls());
+
+		int collectedCount = fingerprintGroup.candidates().size();
 		int newPostCount = 0;
 		int duplicateCount = 0;
-		int skippedCount = 0;
+		int skippedCount = fingerprintGroup.skippedCount();
 
-		for (FeedEntryCandidate candidate : candidates) {
-			try {
-				String fingerprint = canonicalFingerprintGenerator.generate(candidate.canonicalUrl());
-				ArchivedPost archivedPost = archivedPostRepository.findByCanonicalFingerprint(fingerprint)
-					.orElse(null);
-				collectedCount++;
+		for (CandidateFingerprint candidateFingerprint : fingerprintGroup.candidates()) {
+			FeedEntryCandidate candidate = candidateFingerprint.candidate();
+			String fingerprint = candidateFingerprint.fingerprint();
+			ArchivedPost archivedPost = archivedPostsByFingerprint.get(fingerprint);
 
-				if (archivedPost == null) {
-					archivedPost = createArchivedPost(sourceBlog, candidate, fingerprint, finishedAt);
-					newPostCount++;
-					saveOccurrenceIfAbsent(archivedPost, sourceBlog, candidate, DuplicateType.ORIGINAL);
-					continue;
-				}
-
-				duplicateCount++;
-				saveOccurrenceIfAbsent(archivedPost, sourceBlog, candidate, DuplicateType.EXACT_DUPLICATE);
-			} catch (IllegalArgumentException exception) {
-				skippedCount++;
+			if (archivedPost == null) {
+				archivedPost = createArchivedPost(sourceBlog, candidate, fingerprint, finishedAt);
+				archivedPostsByFingerprint.put(fingerprint, archivedPost);
+				newPostCount++;
+				saveOccurrenceIfAbsent(archivedPost, sourceBlog, candidate, DuplicateType.ORIGINAL, existingOriginUrls);
+				continue;
 			}
+
+			duplicateCount++;
+			saveOccurrenceIfAbsent(archivedPost, sourceBlog, candidate, DuplicateType.EXACT_DUPLICATE, existingOriginUrls);
 		}
 
 		sourceBlog.markCollectedAt(finishedAt);
@@ -93,6 +103,9 @@ public class FeedCollectionPersistenceService {
 
 	@Transactional(propagation = Propagation.REQUIRES_NEW)
 	public FeedCollectionResult recordFailure(FeedCollectionTarget target, Throwable exception, Instant finishedAt) {
+		Objects.requireNonNull(target, "target must not be null");
+		Objects.requireNonNull(exception, "exception must not be null");
+		Objects.requireNonNull(finishedAt, "finishedAt must not be null");
 		CollectionRun collectionRun = getCollectionRun(target.collectionRunId());
 		collectionRun.fail(finishedAt, formatFailureReason(exception));
 		return FeedCollectionResult.failure(target.sourceBlogId(), formatFailureReason(exception));
@@ -122,15 +135,37 @@ public class FeedCollectionPersistenceService {
 		ArchivedPost archivedPost,
 		SourceBlog sourceBlog,
 		FeedEntryCandidate candidate,
-		DuplicateType duplicateType
+		DuplicateType duplicateType,
+		Set<String> existingOriginUrls
 	) {
-		if (postSourceOccurrenceRepository.existsBySourceBlog_IdAndOriginUrl(sourceBlog.getId(), candidate.originUrl())) {
+		if (existingOriginUrls.contains(candidate.originUrl())) {
 			return;
 		}
 		PostSourceOccurrence occurrence = duplicateType == DuplicateType.ORIGINAL
 			? PostSourceOccurrence.original(archivedPost, sourceBlog, candidate.originUrl(), candidate.publishedAt())
 			: PostSourceOccurrence.duplicate(archivedPost, sourceBlog, candidate.originUrl(), candidate.publishedAt(), duplicateType);
 		postSourceOccurrenceRepository.save(occurrence);
+		existingOriginUrls.add(candidate.originUrl());
+	}
+
+	private Map<String, ArchivedPost> findArchivedPostsByFingerprint(Set<String> fingerprints) {
+		if (fingerprints.isEmpty()) {
+			return new HashMap<>();
+		}
+		Map<String, ArchivedPost> result = new HashMap<>();
+		archivedPostRepository.findByCanonicalFingerprintIn(fingerprints)
+			.forEach(archivedPost -> result.put(archivedPost.getCanonicalFingerprint(), archivedPost));
+		return result;
+	}
+
+	private Set<String> findExistingOriginUrls(Long sourceBlogId, Set<String> originUrls) {
+		if (originUrls.isEmpty()) {
+			return new HashSet<>();
+		}
+		Set<String> result = new HashSet<>();
+		postSourceOccurrenceRepository.findBySourceBlog_IdAndOriginUrlIn(sourceBlogId, originUrls)
+			.forEach(occurrence -> result.add(occurrence.getOriginUrl()));
+		return result;
 	}
 
 	private SourceBlog getSourceBlog(Long sourceBlogId) {
@@ -146,5 +181,42 @@ public class FeedCollectionPersistenceService {
 	private static String formatFailureReason(Throwable exception) {
 		String message = exception.getClass().getSimpleName() + ": " + exception.getMessage();
 		return StringNormalizer.truncate(message, FAILURE_REASON_MAX_LENGTH);
+	}
+
+	private record CandidateFingerprintGroup(
+		List<CandidateFingerprint> candidates,
+		Set<String> fingerprints,
+		Set<String> originUrls,
+		int skippedCount
+	) {
+
+		private static CandidateFingerprintGroup from(
+			List<FeedEntryCandidate> candidates,
+			CanonicalFingerprintGenerator canonicalFingerprintGenerator
+		) {
+			List<CandidateFingerprint> candidateFingerprints = new java.util.ArrayList<>();
+			Set<String> fingerprints = new HashSet<>();
+			Set<String> originUrls = new HashSet<>();
+			int skippedCount = 0;
+
+			for (FeedEntryCandidate candidate : candidates) {
+				try {
+					String fingerprint = canonicalFingerprintGenerator.generate(candidate.canonicalUrl());
+					candidateFingerprints.add(new CandidateFingerprint(candidate, fingerprint));
+					fingerprints.add(fingerprint);
+					originUrls.add(candidate.originUrl());
+				} catch (IllegalArgumentException exception) {
+					skippedCount++;
+				}
+			}
+
+			return new CandidateFingerprintGroup(candidateFingerprints, fingerprints, originUrls, skippedCount);
+		}
+	}
+
+	private record CandidateFingerprint(
+		FeedEntryCandidate candidate,
+		String fingerprint
+	) {
 	}
 }

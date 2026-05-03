@@ -12,13 +12,10 @@ import org.springframework.stereotype.Service;
 
 import com.techloghub.api.common.util.StringNormalizer;
 
-import lombok.RequiredArgsConstructor;
-
 /**
  * 관리자 API와 scheduler가 공유하는 Batch job 실행 진입점이다.
  */
 @Service
-@RequiredArgsConstructor
 public class BatchJobLauncherService {
 
 	private static final int PARAMETER_MAX_LENGTH = 200;
@@ -26,9 +23,19 @@ public class BatchJobLauncherService {
 	private final JobLauncher jobLauncher;
 	private final BatchRunGuard batchRunGuard;
 	private final Clock clock;
-
-	@Qualifier(BatchJobNames.RSS_FEED_COLLECTION_JOB)
 	private final Job rssFeedCollectionJob;
+
+	public BatchJobLauncherService(
+		@Qualifier("asyncBatchJobLauncher") JobLauncher jobLauncher,
+		BatchRunGuard batchRunGuard,
+		Clock clock,
+		@Qualifier(BatchJobNames.RSS_FEED_COLLECTION_JOB) Job rssFeedCollectionJob
+	) {
+		this.jobLauncher = jobLauncher;
+		this.batchRunGuard = batchRunGuard;
+		this.clock = clock;
+		this.rssFeedCollectionJob = rssFeedCollectionJob;
+	}
 
 	/**
 	 * 승인된 RSS/Atom 소스 전체 수집 job을 실행한다.

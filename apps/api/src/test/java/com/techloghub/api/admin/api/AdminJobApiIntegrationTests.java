@@ -17,7 +17,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.hamcrest.Matchers;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.explore.JobExplorer;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -68,6 +71,9 @@ class AdminJobApiIntegrationTests {
 
 	@Autowired
 	private ObjectMapper objectMapper;
+
+	@Autowired
+	private JobExplorer jobExplorer;
 
 	@Autowired
 	private BCryptPasswordEncoder adminPasswordEncoder;
@@ -130,15 +136,23 @@ class AdminJobApiIntegrationTests {
 			"summary"
 		)));
 
-		mockMvc.perform(post("/api/v1/admin/jobs/collect/run")
+		String runResponse = mockMvc.perform(post("/api/v1/admin/jobs/collect/run")
 				.header(HttpHeaders.AUTHORIZATION, bearer(accessToken))
 				.param("sourceId", sourceBlog.getId().toString())
 				.param("reason", "manual-test"))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.jobName").value("rssFeedCollectionJob"))
 			.andExpect(jsonPath("$.executionId").isNumber())
-			.andExpect(jsonPath("$.status").value("completed"))
-			.andExpect(jsonPath("$.requestedAt").isNotEmpty());
+			.andExpect(jsonPath("$.status").value(Matchers.anyOf(
+				Matchers.is("starting"),
+				Matchers.is("started"),
+				Matchers.is("completed")
+			)))
+			.andExpect(jsonPath("$.requestedAt").isNotEmpty())
+			.andReturn()
+			.getResponse()
+			.getContentAsString();
+		awaitCompletion(readLong(runResponse, "executionId"));
 
 		assertThat(archivedPostRepository.count()).isEqualTo(1);
 		assertThat(collectionRunRepository.findByStatusOrderByStartedAtAsc(CollectionRunStatus.SUCCESS)).hasSize(1);
@@ -150,9 +164,13 @@ class AdminJobApiIntegrationTests {
 		String accessToken = createAdminAndLogin();
 		sourceBlogRepository.saveAndFlush(approvedSource());
 		stubFeedClient.failure(FEED_URL, new FeedFetchException("timeout"));
-		mockMvc.perform(post("/api/v1/admin/jobs/collect/run")
+		String runResponse = mockMvc.perform(post("/api/v1/admin/jobs/collect/run")
 				.header(HttpHeaders.AUTHORIZATION, bearer(accessToken)))
-			.andExpect(status().isOk());
+			.andExpect(status().isOk())
+			.andReturn()
+			.getResponse()
+			.getContentAsString();
+		awaitCompletion(readLong(runResponse, "executionId"));
 
 		mockMvc.perform(get("/api/v1/admin/jobs/failures")
 				.header(HttpHeaders.AUTHORIZATION, bearer(accessToken))
@@ -161,7 +179,7 @@ class AdminJobApiIntegrationTests {
 			.andExpect(jsonPath("$.length()").value(1))
 			.andExpect(jsonPath("$[0].sourceName").value("토스 기술 블로그"))
 			.andExpect(jsonPath("$[0].status").value("failed"))
-			.andExpect(jsonPath("$[0].failureReason").value(org.hamcrest.Matchers.containsString("FeedFetchException")));
+			.andExpect(jsonPath("$[0].failureReason").value(Matchers.containsString("FeedFetchException")));
 	}
 
 	private String createAdminAndLogin() throws Exception {
@@ -183,6 +201,22 @@ class AdminJobApiIntegrationTests {
 			.getContentAsString();
 		JsonNode node = objectMapper.readTree(loginResponse);
 		return node.get("accessToken").asText();
+	}
+
+	private Long readLong(String json, String fieldName) throws Exception {
+		JsonNode node = objectMapper.readTree(json);
+		return node.get(fieldName).asLong();
+	}
+
+	private JobExecution awaitCompletion(Long executionId) throws Exception {
+		for (int attempt = 0; attempt < 100; attempt++) {
+			JobExecution jobExecution = jobExplorer.getJobExecution(executionId);
+			if (jobExecution != null && !jobExecution.getStatus().isRunning()) {
+				return jobExecution;
+			}
+			Thread.sleep(50);
+		}
+		throw new AssertionError("batch job did not finish: " + executionId);
 	}
 
 	private SourceBlog approvedSource() {
