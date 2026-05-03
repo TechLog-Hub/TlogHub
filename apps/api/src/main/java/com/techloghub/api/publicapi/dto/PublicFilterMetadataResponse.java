@@ -2,6 +2,8 @@ package com.techloghub.api.publicapi.dto;
 
 import java.util.List;
 
+import com.techloghub.api.common.util.CollectionSupport;
+
 /**
  * 공개 목록 화면의 필터 메타데이터 응답이다.
  *
@@ -15,9 +17,9 @@ public record PublicFilterMetadataResponse(
 	List<PublicTopicTagFilterResponse> tags
 ) {
 	public PublicFilterMetadataResponse {
-		companies = List.copyOf(companies == null ? List.of() : companies);
-		jobs = List.copyOf(jobs == null ? List.of() : jobs);
-		tags = List.copyOf(tags == null ? List.of() : tags);
+		companies = CollectionSupport.nullToEmptyList(companies);
+		jobs = CollectionSupport.nullToEmptyList(jobs);
+		tags = CollectionSupport.nullToEmptyList(tags);
 	}
 
 	public static PublicFilterMetadataResponse of(

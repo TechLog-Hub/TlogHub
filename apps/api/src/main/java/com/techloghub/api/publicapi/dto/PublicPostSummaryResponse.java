@@ -2,6 +2,8 @@ package com.techloghub.api.publicapi.dto;
 
 import java.util.List;
 
+import com.techloghub.api.common.util.CollectionSupport;
+
 /**
  * 공개 글 상세의 AI 요약 응답이다.
  *
@@ -13,7 +15,7 @@ public record PublicPostSummaryResponse(
 	List<String> bullets
 ) {
 	public PublicPostSummaryResponse {
-		bullets = List.copyOf(bullets == null ? List.of() : bullets);
+		bullets = CollectionSupport.nullToEmptyList(bullets);
 	}
 
 	public static PublicPostSummaryResponse of(String headline, List<String> bullets) {

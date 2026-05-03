@@ -3,6 +3,8 @@ package com.techloghub.api.common.domain;
 import java.util.Collection;
 import java.util.Objects;
 
+import com.techloghub.api.common.util.StringNormalizer;
+
 public final class DomainGuard {
 
 	private DomainGuard() {
@@ -13,7 +15,7 @@ public final class DomainGuard {
 	}
 
 	public static String requireTrimmedNonBlank(String value, String fieldName) {
-		return requireNonBlank(value, fieldName).trim();
+		return requireNonBlank(value, fieldName);
 	}
 
 	public static void requireBoolean(boolean condition, String message) {
@@ -23,17 +25,15 @@ public final class DomainGuard {
 	}
 
 	public static String requireNonBlank(String value, String fieldName) {
-		if (value == null || value.isBlank()) {
+		String normalizedValue = StringNormalizer.trimToNull(value);
+		if (normalizedValue == null) {
 			throw new IllegalArgumentException(fieldName + " must not be blank");
 		}
-		return value.trim();
+		return normalizedValue;
 	}
 
 	public static String normalizeBlankToNull(String value) {
-		if (value == null || value.isBlank()) {
-			return null;
-		}
-		return value.trim();
+		return StringNormalizer.trimToNull(value);
 	}
 
 	public static <T> Collection<T> requireMaxSize(Collection<T> values, int maxSize, String fieldName) {

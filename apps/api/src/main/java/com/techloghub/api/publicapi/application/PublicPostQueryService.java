@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.techloghub.api.common.dto.PageResponse;
 import com.techloghub.api.common.error.BusinessException;
+import com.techloghub.api.common.util.CollectionSupport;
 import com.techloghub.api.content.domain.AiSummary;
 import com.techloghub.api.content.domain.ArchivedPost;
 import com.techloghub.api.content.domain.Company;
@@ -169,7 +170,6 @@ public class PublicPostQueryService {
 	}
 
 	private Map<String, Long> countMap(List<FilterCountQueryDto> rows) {
-		return rows.stream()
-			.collect(Collectors.toMap(FilterCountQueryDto::key, FilterCountQueryDto::count));
+		return CollectionSupport.toValueMapStrict(rows, FilterCountQueryDto::key, FilterCountQueryDto::count);
 	}
 }

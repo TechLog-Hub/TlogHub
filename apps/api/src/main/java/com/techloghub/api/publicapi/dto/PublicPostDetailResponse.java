@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.techloghub.api.common.util.CollectionSupport;
 import com.techloghub.api.content.domain.ArchivedPost;
 
 /**
@@ -38,8 +39,8 @@ public record PublicPostDetailResponse(
 	String aiNotice
 ) {
 	public PublicPostDetailResponse {
-		jobCategories = List.copyOf(jobCategories == null ? List.of() : jobCategories);
-		topicTags = List.copyOf(topicTags == null ? List.of() : topicTags);
+		jobCategories = CollectionSupport.nullToEmptyList(jobCategories);
+		topicTags = CollectionSupport.nullToEmptyList(topicTags);
 	}
 
 	public static PublicPostDetailResponse of(

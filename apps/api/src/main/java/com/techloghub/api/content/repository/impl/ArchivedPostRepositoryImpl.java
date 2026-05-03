@@ -23,6 +23,7 @@ import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.techloghub.api.common.util.StringNormalizer;
 import com.techloghub.api.content.domain.VisibilityState;
 import com.techloghub.api.content.repository.ArchivedPostJobCategoryQueryDto;
 import com.techloghub.api.content.repository.ArchivedPostListQueryDto;
@@ -209,7 +210,7 @@ public class ArchivedPostRepositoryImpl implements ArchivedPostQueryRepository {
 	}
 
 	private BooleanExpression keywordContainsAllTokens(String keyword) {
-		String normalizedKeyword = emptyToNull(keyword);
+		String normalizedKeyword = StringNormalizer.normalizeWhitespaceToNull(keyword);
 		if (normalizedKeyword == null) {
 			return null;
 		}
@@ -250,7 +251,7 @@ public class ArchivedPostRepositoryImpl implements ArchivedPostQueryRepository {
 	}
 
 	private String emptyToNull(String value) {
-		return value == null || value.isBlank() ? null : value.trim();
+		return StringNormalizer.trimToNull(value);
 	}
 
 	private List<String> normalizeValues(List<String> values) {

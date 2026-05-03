@@ -1,5 +1,7 @@
 package com.techloghub.api.common.error;
 
+import com.techloghub.api.common.util.StringNormalizer;
+
 import lombok.Getter;
 
 /**
@@ -9,14 +11,31 @@ import lombok.Getter;
 public class BusinessException extends RuntimeException {
 
 	private final ErrorCode errorCode;
+	private final String safeMessage;
 
 	public BusinessException(ErrorCode errorCode) {
-		super(errorCode.message());
-		this.errorCode = errorCode;
+		this(errorCode, errorCode.message(), null);
 	}
 
 	public BusinessException(ErrorCode errorCode, String message) {
-		super(message);
+		this(errorCode, message, null);
+	}
+
+	public BusinessException(ErrorCode errorCode, Throwable cause) {
+		this(errorCode, errorCode.message(), cause);
+	}
+
+	public BusinessException(ErrorCode errorCode, String safeMessage, Throwable cause) {
+		super(normalizeSafeMessage(errorCode, safeMessage), cause);
 		this.errorCode = errorCode;
+		this.safeMessage = normalizeSafeMessage(errorCode, safeMessage);
+	}
+
+	private static String normalizeSafeMessage(ErrorCode errorCode, String safeMessage) {
+		String normalizedSafeMessage = StringNormalizer.trimToNull(safeMessage);
+		if (normalizedSafeMessage == null) {
+			return errorCode.message();
+		}
+		return normalizedSafeMessage;
 	}
 }

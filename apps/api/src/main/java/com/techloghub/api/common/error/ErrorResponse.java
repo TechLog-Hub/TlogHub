@@ -3,6 +3,7 @@ package com.techloghub.api.common.error;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.techloghub.api.common.util.CollectionSupport;
 
 /**
  * API 공통 오류 응답이다.
@@ -15,17 +16,30 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public record ErrorResponse(
 	String code,
 	String message,
-	List<FieldErrorResponse> errors
+	List<FieldErrorResponse> errors,
+	String traceId
 ) {
+	public ErrorResponse {
+		errors = CollectionSupport.nullToEmptyList(errors);
+	}
+
 	public static ErrorResponse of(ErrorCode errorCode) {
-		return new ErrorResponse(errorCode.code(), errorCode.message(), List.of());
+		return new ErrorResponse(errorCode.code(), errorCode.message(), List.of(), null);
 	}
 
 	public static ErrorResponse of(ErrorCode errorCode, String message) {
-		return new ErrorResponse(errorCode.code(), message, List.of());
+		return new ErrorResponse(errorCode.code(), message, List.of(), null);
 	}
 
 	public static ErrorResponse of(ErrorCode errorCode, List<FieldErrorResponse> errors) {
-		return new ErrorResponse(errorCode.code(), errorCode.message(), List.copyOf(errors));
+		return new ErrorResponse(errorCode.code(), errorCode.message(), errors, null);
+	}
+
+	public static ErrorResponse of(ErrorCode errorCode, String message, String traceId) {
+		return new ErrorResponse(errorCode.code(), message, List.of(), traceId);
+	}
+
+	public static ErrorResponse of(ErrorCode errorCode, List<FieldErrorResponse> errors, String traceId) {
+		return new ErrorResponse(errorCode.code(), errorCode.message(), errors, traceId);
 	}
 }

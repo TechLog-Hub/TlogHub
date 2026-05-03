@@ -2,6 +2,9 @@ package com.techloghub.api.content.repository;
 
 import java.util.List;
 
+import com.techloghub.api.common.util.CollectionSupport;
+import com.techloghub.api.common.util.StringNormalizer;
+
 /**
  * 공개 글 목록 검색과 필터 조건을 repository 경계에서 표현하는 값 객체다.
  *
@@ -16,6 +19,13 @@ public record ArchivedPostSearchCondition(
 	List<String> jobCategoryCodes,
 	List<String> topicTagSlugs
 ) {
+	public ArchivedPostSearchCondition {
+		keyword = StringNormalizer.trimToNull(keyword);
+		companySlugs = CollectionSupport.nullToEmptyList(companySlugs);
+		jobCategoryCodes = CollectionSupport.nullToEmptyList(jobCategoryCodes);
+		topicTagSlugs = CollectionSupport.nullToEmptyList(topicTagSlugs);
+	}
+
 	public static ArchivedPostSearchCondition all() {
 		return new ArchivedPostSearchCondition(null, List.of(), List.of(), List.of());
 	}
@@ -42,13 +52,14 @@ public record ArchivedPostSearchCondition(
 	) {
 		return new ArchivedPostSearchCondition(
 			keyword,
-			List.copyOf(companySlugs),
-			List.copyOf(jobCategoryCodes),
-			List.copyOf(topicTagSlugs)
+			companySlugs,
+			jobCategoryCodes,
+			topicTagSlugs
 		);
 	}
 
 	private static List<String> singletonOrEmpty(String value) {
-		return value == null || value.isBlank() ? List.of() : List.of(value);
+		String normalizedValue = StringNormalizer.trimToNull(value);
+		return normalizedValue == null ? List.of() : List.of(normalizedValue);
 	}
 }
