@@ -64,7 +64,8 @@ export async function requestSpringApi<T>(path: string, options: AdminFetchOptio
     return undefined as T;
   }
 
-  return response.json() as Promise<T>;
+  const text = await response.text();
+  return text ? (JSON.parse(text) as T) : (undefined as T);
 }
 
 async function parseErrorPayload(response: Response): Promise<ApiErrorResponse | undefined> {

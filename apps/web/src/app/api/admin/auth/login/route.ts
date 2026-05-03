@@ -13,7 +13,7 @@ type LoginRouteRequest = {
 };
 
 export async function POST(request: Request) {
-  const body = (await request.json().catch(() => ({}))) as LoginRouteRequest;
+  const body = ((await request.json().catch(() => ({}))) ?? {}) as LoginRouteRequest;
   const email = typeof body.email === "string" ? body.email.trim() : "";
   const password = typeof body.password === "string" ? body.password : "";
 
