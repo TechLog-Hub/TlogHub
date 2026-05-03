@@ -102,12 +102,17 @@ public class AdminAuthenticationService {
 	}
 
 	public void logout(AdminUser adminUser) {
-		adminUser.clearSession();
+		AdminUser targetAdminUser = Optional.ofNullable(adminUser)
+			.map(AdminUser::getId)
+			.flatMap(adminUserRepository::findById)
+			.filter(AdminUser::isActive)
+			.orElseThrow(() -> new BusinessException(AdminErrorCode.ADMIN_SESSION_INVALID));
+		targetAdminUser.clearSession();
 		adminAuditLogRepository.save(AdminAuditLog.record(
-			adminUser,
+			targetAdminUser,
 			ACTION_ADMIN_LOGOUT,
 			AUDIT_TARGET_ADMIN_USER,
-			adminUser.getId(),
+			targetAdminUser.getId(),
 			null,
 			null
 		));
