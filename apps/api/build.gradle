@@ -47,11 +47,11 @@ tasks.named('test', Test) {
 
 tasks.register('unitTest', Test) {
     group = 'verification'
-    description = 'Runs unit tests only.'
+    description = 'Runs tests except integration tests.'
     testClassesDirs = sourceSets.test.output.classesDirs
     classpath = sourceSets.test.runtimeClasspath
     useJUnitPlatform {
-        includeTags 'unit'
+        excludeTags 'integration'
     }
 }
 

@@ -45,6 +45,9 @@ const trackedFiles = git(['ls-files'])
   .map((file) => file.trim())
   .filter(Boolean);
 
+const javaTestFilePattern = /^apps\/api\/src\/test\/java\/.+Tests?\.java$/;
+const validJUnitTagPattern = /@Tag\(\s*(?:(?:TestTags\.)?(?:UNIT|INTEGRATION)|['"](?:unit|integration)['"])\s*\)/;
+
 const forbiddenFiles = trackedFiles.filter((file) =>
   forbiddenTrackedPrefixes.some((prefix) => file.startsWith(prefix)),
 );
@@ -68,11 +71,15 @@ if (forbiddenPatternFiles.length > 0) {
 }
 
 const untaggedTestFiles = trackedFiles
-  .filter((file) => /^apps\/api\/src\/test\/java\/.+Tests\.java$/.test(file))
-  .filter((file) => !readFileSync(file, 'utf8').includes('@Tag('));
+  .filter((file) => javaTestFilePattern.test(file))
+  .filter((file) => !validJUnitTagPattern.test(readFileSync(file, 'utf8')));
 
 if (untaggedTestFiles.length > 0) {
-  fail(`test classes must declare a JUnit @Tag:\n${untaggedTestFiles.map((file) => `- ${file}`).join('\n')}`);
+  fail(
+    `test classes must declare a valid JUnit @Tag(unit|integration):\n${untaggedTestFiles
+      .map((file) => `- ${file}`)
+      .join('\n')}`,
+  );
 }
 
 console.log('CI repository validation passed');

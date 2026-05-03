@@ -22,6 +22,18 @@ const ignoredExtensions = new Set([
   '.webp',
   '.ico',
   '.pdf',
+  '.zip',
+  '.tar',
+  '.gz',
+  '.tgz',
+  '.bz2',
+  '.xz',
+  '.7z',
+  '.rar',
+  '.exe',
+  '.dll',
+  '.so',
+  '.dylib',
 ]);
 
 const secretPatterns = [
