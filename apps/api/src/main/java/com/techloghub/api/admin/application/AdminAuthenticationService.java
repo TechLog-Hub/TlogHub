@@ -2,7 +2,9 @@ package com.techloghub.api.admin.application;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.Clock;
 import java.util.Locale;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -31,30 +33,61 @@ import lombok.RequiredArgsConstructor;
 public class AdminAuthenticationService {
 
 	private static final String BEARER_PREFIX = "Bearer ";
+	public static final String ADMIN_USER_REQUEST_ATTRIBUTE = "techlog.adminUser";
 	private static final String AUDIT_TARGET_ADMIN_USER = "admin_user";
+	private static final String AUDIT_TARGET_ADMIN_AUTH = "admin_auth";
+	private static final long AUDIT_TARGET_EMPTY_ID = 0L;
+	private static final String ACTION_ADMIN_LOGIN_SUCCESS = "ADMIN_LOGIN_SUCCESS";
+	private static final String ACTION_ADMIN_LOGIN_FAILURE = "ADMIN_LOGIN_FAILURE";
+	private static final String ACTION_ADMIN_LOGIN_LOCKED = "ADMIN_LOGIN_LOCKED";
 	private static final String ACTION_ADMIN_LOGOUT = "ADMIN_LOGOUT";
+	private static final String AUDIT_AFTER_SUCCESS = "{\"result\":\"success\"}";
+	private static final String AUDIT_AFTER_INVALID_CREDENTIALS = "{\"result\":\"failure\",\"reason\":\"invalid_credentials\"}";
+	private static final String AUDIT_AFTER_LOCKED = "{\"result\":\"failure\",\"reason\":\"locked\"}";
 
 	private final AdminUserRepository adminUserRepository;
 	private final AdminAuditLogRepository adminAuditLogRepository;
 	private final BCryptPasswordEncoder adminPasswordEncoder;
 	private final AdminSessionTokenGenerator adminSessionTokenGenerator;
+	private final Clock clock;
 
 	@Value("${techlog.admin.session-ttl:PT12H}")
 	private Duration sessionTtl;
 
+	@Value("${techlog.admin.max-failed-login-attempts:5}")
+	private int maxFailedLoginAttempts;
+
+	@Value("${techlog.admin.login-lock-duration:PT15M}")
+	private Duration loginLockDuration;
+
 	public AdminLoginResponse login(String email, String password) {
 		String normalizedEmail = normalizeEmail(email);
-		AdminUser adminUser = adminUserRepository.findByEmail(normalizedEmail)
-			.filter(AdminUser::isActive)
-			.orElseThrow(() -> new BusinessException(AdminErrorCode.ADMIN_INVALID_CREDENTIALS));
+		Optional<AdminUser> adminUserOptional = adminUserRepository.findByEmail(normalizedEmail)
+			.filter(AdminUser::isActive);
+		if (adminUserOptional.isEmpty()) {
+			recordLoginFailure(null);
+			throw new BusinessException(AdminErrorCode.ADMIN_INVALID_CREDENTIALS);
+		}
+
+		AdminUser adminUser = adminUserOptional.get();
+		Instant now = clock.instant();
+		if (adminUser.isLoginLocked(now)) {
+			recordLoginLocked(adminUser);
+			throw new BusinessException(AdminErrorCode.ADMIN_LOGIN_LOCKED);
+		}
+
 		if (!adminPasswordEncoder.matches(password, adminUser.getPasswordHash())) {
+			adminUser.recordLoginFailure(now, maxFailedLoginAttempts, loginLockDuration);
+			recordLoginFailure(adminUser);
 			throw new BusinessException(AdminErrorCode.ADMIN_INVALID_CREDENTIALS);
 		}
 
 		String sessionToken = adminSessionTokenGenerator.generate();
-		Instant issuedAt = Instant.now();
+		Instant issuedAt = clock.instant();
 		Instant expiresAt = issuedAt.plus(sessionTtl);
+		adminUser.clearLoginFailures();
 		adminUser.issueSession(tokenHash(sessionToken), issuedAt, expiresAt);
+		recordLoginSuccess(adminUser);
 		return AdminLoginResponse.of(adminUser, sessionToken, expiresAt);
 	}
 
@@ -65,6 +98,10 @@ public class AdminAuthenticationService {
 
 	public void logout(String authorization) {
 		AdminUser adminUser = requireAdmin(authorization);
+		logout(adminUser);
+	}
+
+	public void logout(AdminUser adminUser) {
 		adminUser.clearSession();
 		adminAuditLogRepository.save(AdminAuditLog.record(
 			adminUser,
@@ -80,7 +117,7 @@ public class AdminAuthenticationService {
 	public AdminUser requireAdmin(String authorization) {
 		String sessionToken = bearerToken(authorization);
 		String sessionTokenHash = tokenHash(sessionToken);
-		Instant now = Instant.now();
+		Instant now = clock.instant();
 		return adminUserRepository.findBySessionTokenHash(sessionTokenHash)
 			.filter(adminUser -> adminUser.hasValidSession(now))
 			.orElseThrow(() -> new BusinessException(AdminErrorCode.ADMIN_SESSION_INVALID));
@@ -108,5 +145,38 @@ public class AdminAuthenticationService {
 
 	private String tokenHash(String token) {
 		return CryptoSupport.sha256Hex(token);
+	}
+
+	private void recordLoginSuccess(AdminUser adminUser) {
+		adminAuditLogRepository.save(AdminAuditLog.record(
+			adminUser,
+			ACTION_ADMIN_LOGIN_SUCCESS,
+			AUDIT_TARGET_ADMIN_USER,
+			adminUser.getId(),
+			null,
+			AUDIT_AFTER_SUCCESS
+		));
+	}
+
+	private void recordLoginFailure(AdminUser adminUser) {
+		adminAuditLogRepository.save(AdminAuditLog.record(
+			adminUser,
+			ACTION_ADMIN_LOGIN_FAILURE,
+			adminUser == null ? AUDIT_TARGET_ADMIN_AUTH : AUDIT_TARGET_ADMIN_USER,
+			adminUser == null ? AUDIT_TARGET_EMPTY_ID : adminUser.getId(),
+			null,
+			AUDIT_AFTER_INVALID_CREDENTIALS
+		));
+	}
+
+	private void recordLoginLocked(AdminUser adminUser) {
+		adminAuditLogRepository.save(AdminAuditLog.record(
+			adminUser,
+			ACTION_ADMIN_LOGIN_LOCKED,
+			AUDIT_TARGET_ADMIN_USER,
+			adminUser.getId(),
+			null,
+			AUDIT_AFTER_LOCKED
+		));
 	}
 }

@@ -1,6 +1,7 @@
 package com.techloghub.api.admin.api;
 
 import static com.techloghub.api.testsupport.TestTags.INTEGRATION;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -25,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.techloghub.api.admin.domain.AdminUser;
+import com.techloghub.api.admin.repository.AdminAuditLogRepository;
 import com.techloghub.api.admin.repository.AdminUserRepository;
 import com.techloghub.api.content.domain.AiSummary;
 import com.techloghub.api.content.domain.ArchivedPost;
@@ -58,6 +61,9 @@ class AdminApiIntegrationTests {
 
 	@Autowired
 	private BCryptPasswordEncoder adminPasswordEncoder;
+
+	@Autowired
+	private AdminAuditLogRepository adminAuditLogRepository;
 
 	@Autowired
 	private AdminUserRepository adminUserRepository;
@@ -182,29 +188,57 @@ class AdminApiIntegrationTests {
 				.header(HttpHeaders.AUTHORIZATION, bearer(accessToken)))
 			.andExpect(status().isUnauthorized())
 			.andExpect(jsonPath("$.code").value("ADMIN_SESSION_INVALID"));
+
+		assertThat(adminAuditLogRepository.findByAdminUser_IdOrderByCreatedAtDesc(
+			adminUser.getId(),
+			PageRequest.of(0, 10)
+		).map(adminAuditLog -> adminAuditLog.getActionType()).toList())
+			.contains("ADMIN_LOGIN_SUCCESS", "ADMIN_LOGOUT");
 	}
 
 	@Test
 	void rejectsInvalidLoginAndMissingAdminAuthorization() throws Exception {
-		adminUserRepository.saveAndFlush(AdminUser.create(
+		AdminUser adminUser = adminUserRepository.saveAndFlush(AdminUser.create(
 			ADMIN_EMAIL,
 			adminPasswordEncoder.encode(ADMIN_PASSWORD)
 		));
+
+		for (int attempt = 0; attempt < 5; attempt++) {
+			mockMvc.perform(post("/api/v1/admin/auth/login")
+					.contentType(MediaType.APPLICATION_JSON)
+					.content("""
+						{
+						  "email": "admin@techloghub.local",
+						  "password": "wrong-password"
+						}
+						"""))
+				.andExpect(status().isUnauthorized())
+				.andExpect(jsonPath("$.code").value("ADMIN_INVALID_CREDENTIALS"));
+		}
 
 		mockMvc.perform(post("/api/v1/admin/auth/login")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("""
 					{
 					  "email": "admin@techloghub.local",
-					  "password": "wrong-password"
+					  "password": "admin1234"
 					}
 					"""))
-			.andExpect(status().isUnauthorized())
-			.andExpect(jsonPath("$.code").value("ADMIN_INVALID_CREDENTIALS"));
+			.andExpect(status().isTooManyRequests())
+			.andExpect(jsonPath("$.code").value("ADMIN_LOGIN_LOCKED"));
 
 		mockMvc.perform(get("/api/v1/admin/sources"))
 			.andExpect(status().isUnauthorized())
 			.andExpect(jsonPath("$.code").value("ADMIN_SESSION_INVALID"));
+
+		assertThat(adminUserRepository.findByEmail(ADMIN_EMAIL)).get()
+			.extracting(AdminUser::getFailedLoginCount)
+			.isEqualTo(5);
+		assertThat(adminAuditLogRepository.findByAdminUser_IdOrderByCreatedAtDesc(
+			adminUser.getId(),
+			PageRequest.of(0, 10)
+		).map(adminAuditLog -> adminAuditLog.getActionType()).toList())
+			.contains("ADMIN_LOGIN_FAILURE", "ADMIN_LOGIN_LOCKED");
 	}
 
 	private String readText(String json, String fieldName) throws Exception {

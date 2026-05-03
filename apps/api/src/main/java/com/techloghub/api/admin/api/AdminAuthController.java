@@ -1,15 +1,15 @@
 package com.techloghub.api.admin.api;
 
-import org.springframework.http.HttpHeaders;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.techloghub.api.admin.application.AdminAuthenticationService;
+import com.techloghub.api.admin.domain.AdminUser;
 import com.techloghub.api.admin.dto.AdminLoginRequest;
 import com.techloghub.api.admin.dto.AdminLoginResponse;
 import com.techloghub.api.admin.dto.AdminMeResponse;
@@ -34,12 +34,16 @@ public class AdminAuthController {
 	}
 
 	@PostMapping("/logout")
-	public void logout(@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization) {
-		adminAuthenticationService.logout(authorization);
+	public void logout(
+		@RequestAttribute(AdminAuthenticationService.ADMIN_USER_REQUEST_ATTRIBUTE) AdminUser adminUser
+	) {
+		adminAuthenticationService.logout(adminUser);
 	}
 
 	@GetMapping("/me")
-	public AdminMeResponse me(@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization) {
-		return adminAuthenticationService.me(authorization);
+	public AdminMeResponse me(
+		@RequestAttribute(AdminAuthenticationService.ADMIN_USER_REQUEST_ATTRIBUTE) AdminUser adminUser
+	) {
+		return AdminMeResponse.from(adminUser);
 	}
 }

@@ -3,6 +3,7 @@ package com.techloghub.api.admin.domain;
 import static com.techloghub.api.common.domain.DomainGuard.requireNonBlank;
 import static com.techloghub.api.common.domain.DomainGuard.requireNonNull;
 
+import java.time.Duration;
 import java.time.Instant;
 
 import com.techloghub.api.common.domain.BaseEntity;
@@ -65,11 +66,18 @@ public class AdminUser extends BaseEntity {
 	@Column(name = "session_expires_at")
 	private Instant sessionExpiresAt;
 
+	@Column(name = "failed_login_count", nullable = false)
+	private int failedLoginCount;
+
+	@Column(name = "login_locked_until")
+	private Instant loginLockedUntil;
+
 	private AdminUser(String email, String passwordHash, AdminRole role) {
 		this.email = requireNonBlank(email, "email").toLowerCase();
 		this.passwordHash = requireNonBlank(passwordHash, "passwordHash");
 		this.role = requireNonNull(role, "role");
 		this.active = true;
+		this.failedLoginCount = 0;
 		validateEmailLength(this.email);
 		validatePasswordHashLength(this.passwordHash);
 	}
@@ -113,6 +121,31 @@ public class AdminUser extends BaseEntity {
 			&& sessionTokenHash != null
 			&& sessionExpiresAt != null
 			&& requireNonNull(now, "now").isBefore(sessionExpiresAt);
+	}
+
+	public void recordLoginFailure(Instant now, int maxFailedLoginAttempts, Duration lockDuration) {
+		requireNonNull(now, "now");
+		requireNonNull(lockDuration, "lockDuration");
+		if (maxFailedLoginAttempts < 1) {
+			throw new IllegalArgumentException("maxFailedLoginAttempts must be >= 1");
+		}
+		if (loginLockedUntil != null && !now.isBefore(loginLockedUntil)) {
+			failedLoginCount = 0;
+			loginLockedUntil = null;
+		}
+		failedLoginCount += 1;
+		if (failedLoginCount >= maxFailedLoginAttempts) {
+			loginLockedUntil = now.plus(lockDuration);
+		}
+	}
+
+	public void clearLoginFailures() {
+		failedLoginCount = 0;
+		loginLockedUntil = null;
+	}
+
+	public boolean isLoginLocked(Instant now) {
+		return loginLockedUntil != null && requireNonNull(now, "now").isBefore(loginLockedUntil);
 	}
 
 	private static void validateEmailLength(String value) {

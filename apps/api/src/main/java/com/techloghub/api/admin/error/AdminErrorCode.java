@@ -22,6 +22,11 @@ public enum AdminErrorCode implements ErrorCode {
 		"ADMIN_SESSION_INVALID",
 		"관리자 인증이 필요합니다."
 	),
+	ADMIN_LOGIN_LOCKED(
+		HttpStatus.TOO_MANY_REQUESTS,
+		"ADMIN_LOGIN_LOCKED",
+		"관리자 로그인이 일시적으로 제한되었습니다. 잠시 후 다시 시도해 주세요."
+	),
 	ADMIN_POST_NOT_FOUND(
 		HttpStatus.NOT_FOUND,
 		"ADMIN_POST_NOT_FOUND",
