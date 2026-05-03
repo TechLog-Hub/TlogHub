@@ -30,3 +30,8 @@ server:
     include-binding-errors: never
     include-stacktrace: never
     include-exception: false
+
+techlog:
+  subscription:
+    verification-token-ttl: ${TECHLOG_SUBSCRIPTION_VERIFICATION_TOKEN_TTL:PT24H}
+    expose-dev-tokens: ${TECHLOG_SUBSCRIPTION_EXPOSE_DEV_TOKENS:false}

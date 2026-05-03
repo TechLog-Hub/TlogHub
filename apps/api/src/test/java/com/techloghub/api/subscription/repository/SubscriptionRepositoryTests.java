@@ -77,7 +77,8 @@ class SubscriptionRepositoryTests {
 		assertThat(verificationRequestRepository.findByTokenHash("verify-token-hash")).isPresent();
 		assertThat(verificationRequestRepository.findBySubscriber_IdAndUsedAtIsNull(subscriber.getId())).hasSize(1);
 		assertThat(companySubscriptionRepository.findBySubscriber_IdAndCompany_Slug(subscriber.getId(), "kakao")).isPresent();
-		assertThat(companySubscriptionRepository.findBySubscriber_IdAndActiveTrue(subscriber.getId())).hasSize(1);
+		assertThat(companySubscriptionRepository.findBySubscriber_IdAndActiveTrueOrderByCompany_NameKoAsc(subscriber.getId()))
+			.hasSize(1);
 		assertThat(companySubscriptionRepository.existsBySubscriber_IdAndCompany_IdAndActiveTrue(
 			subscriber.getId(),
 			company.getId()

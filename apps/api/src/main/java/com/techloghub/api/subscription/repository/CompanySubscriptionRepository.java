@@ -29,7 +29,24 @@ public interface CompanySubscriptionRepository extends JpaRepository<CompanySubs
 	 * @return 활성 기업 구독 목록
 	 */
 	@EntityGraph(attributePaths = "company")
-	List<CompanySubscription> findBySubscriber_IdAndActiveTrue(Long subscriberId);
+	List<CompanySubscription> findBySubscriber_IdAndActiveTrueOrderByCompany_NameKoAsc(Long subscriberId);
+
+	/**
+	 * 구독자의 전체 기업 구독 목록을 기업과 함께 조회한다.
+	 *
+	 * @param subscriberId 구독자 ID
+	 * @return 전체 기업 구독 목록
+	 */
+	@EntityGraph(attributePaths = "company")
+	List<CompanySubscription> findBySubscriber_IdOrderByCompany_NameKoAsc(Long subscriberId);
+
+	/**
+	 * 구독자의 확인 대기 기업 구독 목록을 조회한다.
+	 *
+	 * @param subscriberId 구독자 ID
+	 * @return 비활성 기업 구독 목록
+	 */
+	List<CompanySubscription> findBySubscriber_IdAndActiveFalse(Long subscriberId);
 
 	/**
 	 * 활성 기업 구독 중복 여부를 확인한다.
