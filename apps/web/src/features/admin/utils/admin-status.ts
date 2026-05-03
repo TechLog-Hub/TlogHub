@@ -1,4 +1,6 @@
 import type {
+  AdminFailureStatus,
+  AdminJobStatus,
   AdminSourceStatus,
   AdminSourceType,
   ProcessingState,
@@ -62,6 +64,21 @@ const summaryStateMap: Record<SummaryState, AdminStatusBadgeModel & { value: Sum
   hidden: { value: "hidden", label: "요약 숨김", tone: "neutral" },
 };
 
+const jobStatusMap: Record<AdminJobStatus, AdminStatusBadgeModel & { value: AdminJobStatus }> = {
+  starting: { value: "starting", label: "시작 중", tone: "info" },
+  started: { value: "started", label: "실행 중", tone: "info" },
+  stopping: { value: "stopping", label: "중지 중", tone: "warning" },
+  completed: { value: "completed", label: "완료", tone: "success" },
+  failed: { value: "failed", label: "실패", tone: "danger" },
+  stopped: { value: "stopped", label: "중지", tone: "warning" },
+  abandoned: { value: "abandoned", label: "폐기", tone: "danger" },
+  unknown: { value: "unknown", label: "알 수 없음", tone: "neutral" },
+};
+
+const failureStatusMap: Record<AdminFailureStatus, AdminStatusBadgeModel & { value: AdminFailureStatus }> = {
+  failed: { value: "failed", label: "실패", tone: "danger" },
+};
+
 const sourceTypeMap: Record<AdminSourceType, string> = {
   rss: "RSS",
   atom: "Atom",
@@ -82,6 +99,14 @@ export function getVisibilityStateBadge(state: VisibilityState) {
 
 export function getSummaryStateBadge(state: SummaryState) {
   return summaryStateMap[state];
+}
+
+export function getJobStatusBadge(status: AdminJobStatus) {
+  return jobStatusMap[status] ?? jobStatusMap.unknown;
+}
+
+export function getFailureStatusBadge(status: AdminFailureStatus) {
+  return failureStatusMap[status];
 }
 
 export function getSourceTypeLabel(sourceType: AdminSourceType) {

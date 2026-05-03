@@ -21,10 +21,15 @@ export default function AdminHomePage() {
           <strong>게시 상태 확인</strong>
           <p>수집 글의 게시, 처리, 요약 상태를 필터로 빠르게 좁혀봅니다.</p>
         </Link>
+        <Link className="home-card" href="/admin/jobs">
+          <span>수집 작업</span>
+          <strong>RSS Batch 실행</strong>
+          <p>승인된 소스를 수동 수집하고 최근 실패 사유를 확인합니다.</p>
+        </Link>
       </section>
       <section className="notice-card">
         <strong>최근 운영 기준</strong>
-        <p>현재 화면은 인증, 소스 목록, 글 목록/상세 API만 사용합니다. 승인, 게시 변경, 요약 재생성은 후속 mutation API 이후 노출합니다.</p>
+        <p>현재 화면은 인증, 소스 목록, 글 목록/상세, RSS 수동 수집 API를 사용합니다. 승인, 게시 변경, 요약 재생성은 후속 mutation API 이후 노출합니다.</p>
       </section>
     </div>
   );

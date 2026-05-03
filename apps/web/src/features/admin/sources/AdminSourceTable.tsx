@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { AdminStatusBadge } from "@/features/admin/components/AdminStatusBadge";
+import { AdminCollectionRunButton } from "@/features/admin/jobs/AdminCollectionRunButton";
 import type { AdminSourceListItemDto } from "@/features/admin/types/admin-api.dto";
 import { toAdminSourceRow } from "@/features/admin/utils/admin-view-mapper";
 
@@ -23,6 +24,7 @@ export function AdminSourceTable({ sources }: AdminSourceTableProps) {
             <th>Feed</th>
             <th>마지막 수집</th>
             <th>생성일</th>
+            <th>작업</th>
           </tr>
         </thead>
         <tbody>
@@ -49,6 +51,17 @@ export function AdminSourceTable({ sources }: AdminSourceTableProps) {
               </td>
               <td>{source.lastCollectedAtLabel}</td>
               <td>{source.createdAtLabel}</td>
+              <td>
+                <AdminCollectionRunButton
+                  sourceId={source.id}
+                  label="수집"
+                  reason="manual-admin-ui-source"
+                  variant="secondary"
+                  compact
+                  disabled={!source.canRunCollection}
+                  disabledReason="승인된 RSS/Atom feed만 실행할 수 있습니다."
+                />
+              </td>
             </tr>
           ))}
         </tbody>
@@ -80,6 +93,14 @@ export function AdminSourceTable({ sources }: AdminSourceTableProps) {
             <Link className="text-link" href={source.homepageUrl} target="_blank" rel="noreferrer">
               홈페이지 열기
             </Link>
+            <AdminCollectionRunButton
+              sourceId={source.id}
+              label="이 소스 수집"
+              reason="manual-admin-ui-source"
+              variant="secondary"
+              disabled={!source.canRunCollection}
+              disabledReason="승인된 RSS/Atom feed만 실행할 수 있습니다."
+            />
           </article>
         ))}
       </div>
