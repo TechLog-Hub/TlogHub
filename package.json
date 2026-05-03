@@ -3,12 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "description": "Techlog Hub monorepo root tooling.",
+  "workspaces": [
+    "apps/web"
+  ],
   "scripts": {
     "prepare": "husky || true",
     "validate:repo": "node scripts/validate-repo.mjs",
     "validate:repo:ci": "node scripts/validate-repo-ci.mjs",
     "validate:commit-message": "node scripts/validate-commit-message.mjs",
     "gradle": "node scripts/run-gradle.mjs",
+    "web:dev": "npm --workspace apps/web run dev",
+    "web:build": "npm --workspace apps/web run build",
+    "web:typecheck": "npm --workspace apps/web run typecheck",
+    "web:lint": "npm --workspace apps/web run lint",
     "test:unit": "node scripts/run-gradle.mjs :apps:api:unitTest --build-cache --configuration-cache",
     "test:integration": "node scripts/run-gradle.mjs :apps:api:integrationTest --build-cache --configuration-cache",
     "security:secrets": "node scripts/scan-secrets.mjs"
