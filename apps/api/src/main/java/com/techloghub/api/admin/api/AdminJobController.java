@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -58,6 +59,13 @@ public class AdminJobController {
 		} catch (BatchJobLaunchException exception) {
 			throw new BusinessException(AdminErrorCode.ADMIN_BATCH_JOB_LAUNCH_FAILED, exception);
 		}
+	}
+
+	@GetMapping("/executions/{executionId}")
+	public AdminJobRunResponse getJobExecution(
+		@PathVariable @Positive Long executionId
+	) {
+		return adminJobQueryService.getJobExecution(executionId);
 	}
 
 	@GetMapping("/failures")

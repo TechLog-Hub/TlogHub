@@ -1,13 +1,19 @@
 import type {
+  AdminFailureDto,
+  AdminJobRunDto,
   AdminPostListItemDto,
   AdminSourceListItemDto,
 } from "@/features/admin/types/admin-api.dto";
 import type {
+  AdminFailureRow,
+  AdminJobRunResult,
   AdminPostRow,
   AdminSourceRow,
 } from "@/features/admin/types/admin-view.model";
 import { formatAdminDate, formatAdminDateTime } from "@/features/admin/utils/admin-date";
 import {
+  getFailureStatusBadge,
+  getJobStatusBadge,
   getProcessingStateBadge,
   getSourceStatusBadge,
   getSourceTypeLabel,
@@ -28,6 +34,10 @@ export function toAdminSourceRow(source: AdminSourceListItemDto): AdminSourceRow
     lastCollectedAtLabel: formatAdminDateTime(source.lastCollectedAt, "수집 전"),
     createdAtLabel: formatAdminDateTime(source.createdAt),
     reviewReasonLabel: source.reviewReason ?? undefined,
+    canRunCollection:
+      source.status === "approved" &&
+      Boolean(source.feedUrl) &&
+      ["rss", "atom"].includes(source.sourceType),
   };
 }
 
@@ -55,4 +65,24 @@ export function toDomainLabel(url: string): string {
   } catch {
     return url;
   }
+}
+
+export function toAdminJobRunResult(result: AdminJobRunDto): AdminJobRunResult {
+  return {
+    executionLabel: `#${result.executionId}`,
+    status: getJobStatusBadge(result.status),
+    requestedAtLabel: formatAdminDateTime(result.requestedAt),
+  };
+}
+
+export function toAdminFailureRow(failure: AdminFailureDto): AdminFailureRow {
+  return {
+    id: failure.collectionRunId,
+    sourceId: failure.sourceBlogId,
+    sourceLabel: failure.sourceName,
+    status: getFailureStatusBadge(failure.status),
+    startedAtLabel: formatAdminDateTime(failure.startedAt),
+    finishedAtLabel: formatAdminDateTime(failure.finishedAt, "종료 전"),
+    failureReasonLabel: failure.failureReason ?? "실패 사유가 기록되지 않았습니다.",
+  };
 }

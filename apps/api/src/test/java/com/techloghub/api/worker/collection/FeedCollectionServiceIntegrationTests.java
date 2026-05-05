@@ -25,9 +25,13 @@ import com.techloghub.api.content.domain.CollectionRunStatus;
 import com.techloghub.api.content.domain.Company;
 import com.techloghub.api.content.domain.SourceBlog;
 import com.techloghub.api.content.domain.SourceType;
+import com.techloghub.api.content.domain.SummaryState;
+import com.techloghub.api.content.domain.VisibilityState;
+import com.techloghub.api.content.repository.AiSummaryRepository;
 import com.techloghub.api.content.repository.ArchivedPostRepository;
 import com.techloghub.api.content.repository.CollectionRunRepository;
 import com.techloghub.api.content.repository.CompanyRepository;
+import com.techloghub.api.content.repository.FeedEntrySnapshotRepository;
 import com.techloghub.api.content.repository.PostSourceOccurrenceRepository;
 import com.techloghub.api.content.repository.SourceBlogRepository;
 
@@ -61,6 +65,12 @@ class FeedCollectionServiceIntegrationTests {
 	private ArchivedPostRepository archivedPostRepository;
 
 	@Autowired
+	private AiSummaryRepository aiSummaryRepository;
+
+	@Autowired
+	private FeedEntrySnapshotRepository feedEntrySnapshotRepository;
+
+	@Autowired
 	private PostSourceOccurrenceRepository postSourceOccurrenceRepository;
 
 	@Autowired
@@ -77,7 +87,9 @@ class FeedCollectionServiceIntegrationTests {
 	}
 
 	private void clearData() {
+		feedEntrySnapshotRepository.deleteAll();
 		collectionRunRepository.deleteAll();
+		aiSummaryRepository.deleteAll();
 		postSourceOccurrenceRepository.deleteAll();
 		archivedPostRepository.deleteAll();
 		sourceBlogRepository.deleteAll();
@@ -103,8 +115,18 @@ class FeedCollectionServiceIntegrationTests {
 		assertThat(secondSummary.newPostCount()).isZero();
 		assertThat(secondSummary.duplicateCount()).isEqualTo(2);
 		assertThat(archivedPostRepository.count()).isEqualTo(2);
+		assertThat(aiSummaryRepository.count()).isEqualTo(2);
+		assertThat(feedEntrySnapshotRepository.count()).isEqualTo(2);
 		assertThat(postSourceOccurrenceRepository.count()).isEqualTo(2);
 		assertThat(collectionRunRepository.findByStatusOrderByStartedAtAsc(CollectionRunStatus.SUCCESS)).hasSize(2);
+		assertThat(archivedPostRepository.findAll())
+			.allSatisfy(post -> {
+				assertThat(post.getVisibilityState()).isEqualTo(VisibilityState.PUBLISHED);
+				assertThat(aiSummaryRepository.findByArchivedPost_IdAndCurrentTrue(post.getId()))
+					.hasValueSatisfying(summary -> assertThat(summary.getSummaryState()).isEqualTo(SummaryState.PENDING));
+			});
+		assertThat(feedEntrySnapshotRepository.findAll())
+			.allSatisfy(snapshot -> assertThat(snapshot.getSummaryText()).isEqualTo("summary"));
 		assertThat(sourceBlogRepository.findById(sourceBlog.getId()))
 			.hasValueSatisfying(found -> assertThat(found.getLastCollectedAt()).isNotNull());
 	}

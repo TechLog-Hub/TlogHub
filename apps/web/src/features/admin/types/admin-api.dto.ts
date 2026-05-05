@@ -94,3 +94,32 @@ export type AdminPostDetailDto = {
   jobCategories: string[];
   topicTags: string[];
 };
+
+export type AdminJobStatus =
+  | "starting"
+  | "started"
+  | "stopping"
+  | "completed"
+  | "failed"
+  | "stopped"
+  | "abandoned"
+  | "unknown";
+
+export type AdminJobRunDto = {
+  jobName: string;
+  executionId: number;
+  status: AdminJobStatus;
+  requestedAt: string;
+};
+
+export type AdminFailureStatus = "failed";
+
+export type AdminFailureDto = {
+  collectionRunId: number;
+  sourceBlogId: number;
+  sourceName: string;
+  status: AdminFailureStatus;
+  startedAt: string;
+  finishedAt: string | null;
+  failureReason: string | null;
+};

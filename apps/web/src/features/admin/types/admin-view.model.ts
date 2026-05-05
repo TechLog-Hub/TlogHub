@@ -1,4 +1,6 @@
 import type {
+  AdminFailureStatus,
+  AdminJobStatus,
   AdminSourceStatus,
   ProcessingState,
   SummaryState,
@@ -25,6 +27,7 @@ export type AdminSourceRow = {
   lastCollectedAtLabel: string;
   createdAtLabel: string;
   reviewReasonLabel?: string;
+  canRunCollection: boolean;
 };
 
 export type AdminPostRow = {
@@ -41,4 +44,20 @@ export type AdminPostRow = {
   reviewReasonLabel?: string;
   detailHref: string;
   originHref: string;
+};
+
+export type AdminJobRunResult = {
+  executionLabel: string;
+  status: AdminStatusBadgeModel & { value: AdminJobStatus };
+  requestedAtLabel: string;
+};
+
+export type AdminFailureRow = {
+  id: number;
+  sourceId: number;
+  sourceLabel: string;
+  status: AdminStatusBadgeModel & { value: AdminFailureStatus };
+  startedAtLabel: string;
+  finishedAtLabel: string;
+  failureReasonLabel: string;
 };

@@ -285,7 +285,7 @@ select {
 
 .home-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
 }
 
@@ -328,6 +328,54 @@ select {
   display: block;
   margin-bottom: 8px;
   color: var(--text-strong);
+}
+
+.operation-panel,
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.operation-panel {
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(255, 255, 255, 0.94)),
+    var(--surface);
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.04);
+}
+
+.operation-panel p,
+.section-header p {
+  margin: 0 0 6px;
+  color: var(--admin-blue);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.operation-panel h2,
+.section-header h2 {
+  margin: 0;
+  color: var(--text-strong);
+  font-size: 20px;
+  letter-spacing: -0.03em;
+}
+
+.operation-panel span,
+.section-header span {
+  display: block;
+  margin-top: 8px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.section-header span {
+  margin-top: 0;
+  font-size: 13px;
+  font-weight: 800;
 }
 
 .filter-bar {
@@ -436,6 +484,61 @@ select {
 .admin-table__title span {
   color: var(--text-muted);
   font-size: 12px;
+}
+
+.admin-table__subtext {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.admin-table__reason {
+  display: -webkit-box;
+  max-width: 420px;
+  overflow: hidden;
+  color: var(--text-muted);
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.job-run {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+}
+
+.job-run--compact {
+  min-width: 96px;
+}
+
+.job-run__feedback {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.job-run__hint,
+.job-run__error {
+  max-width: 220px;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.job-run__hint {
+  color: var(--text-muted);
+}
+
+.job-run__error {
+  color: var(--danger-text);
+  font-weight: 700;
 }
 
 .admin-card-list {
@@ -644,6 +747,12 @@ select {
   .filter-bar,
   .filter-bar--posts {
     grid-template-columns: 1fr;
+  }
+
+  .operation-panel,
+  .section-header {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .admin-table {
