@@ -15,9 +15,9 @@ export async function runAdminCollectionJob(params: RunCollectionJobParams = {})
 	return adminFetch<AdminJobRunDto>("/api/v1/admin/jobs/collect/run", {
 		method: "POST",
 		query: {
-			sourceId: params.sourceId,
-      reason: params.reason,
-    },
+			...(params.sourceId !== undefined ? { sourceId: params.sourceId } : {}),
+			reason: params.reason,
+		},
 	});
 }
 

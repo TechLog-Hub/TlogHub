@@ -52,28 +52,33 @@ export function AdminCollectionRunButton({
 
   function handleRun() {
     setErrorMessage(null);
+    setResult(null);
 
     startTransition(async () => {
-      const response = await fetch("/admin/api/jobs/collect/run", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ sourceId, reason }),
-      });
+      try {
+        const response = await fetch("/admin/api/jobs/collect/run", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ sourceId, reason }),
+        });
 
-      const payload = await response.json().catch(() => ({ code: "UNKNOWN_ERROR" }));
+        const payload = await response.json().catch(() => ({ code: "UNKNOWN_ERROR" }));
 
-      if (!response.ok) {
-        const code = typeof payload.code === "string" ? payload.code : "UNKNOWN_ERROR";
-        setErrorMessage(jobRunErrorMessages[code] ?? "수집 작업을 실행하지 못했습니다.");
-        return;
+        if (!response.ok) {
+          const code = typeof payload.code === "string" ? payload.code : "UNKNOWN_ERROR";
+          setErrorMessage(jobRunErrorMessages[code] ?? "수집 작업을 실행하지 못했습니다.");
+          return;
+        }
+
+        const acceptedResult = payload as AdminJobRunDto;
+        setResult(acceptedResult);
+        setResult(await pollJobExecution(acceptedResult));
+        router.refresh();
+      } catch {
+        setErrorMessage("네트워크 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
       }
-
-      const acceptedResult = payload as AdminJobRunDto;
-      setResult(acceptedResult);
-      setResult(await pollJobExecution(acceptedResult));
-      router.refresh();
     });
   }
 
