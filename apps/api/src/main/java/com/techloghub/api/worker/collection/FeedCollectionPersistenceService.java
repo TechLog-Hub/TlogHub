@@ -14,12 +14,16 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.techloghub.api.common.util.StringNormalizer;
 import com.techloghub.api.content.domain.ArchivedPost;
+import com.techloghub.api.content.domain.AiSummary;
 import com.techloghub.api.content.domain.CollectionRun;
 import com.techloghub.api.content.domain.DuplicateType;
+import com.techloghub.api.content.domain.FeedEntrySnapshot;
 import com.techloghub.api.content.domain.PostSourceOccurrence;
 import com.techloghub.api.content.domain.SourceBlog;
+import com.techloghub.api.content.repository.AiSummaryRepository;
 import com.techloghub.api.content.repository.ArchivedPostRepository;
 import com.techloghub.api.content.repository.CollectionRunRepository;
+import com.techloghub.api.content.repository.FeedEntrySnapshotRepository;
 import com.techloghub.api.content.repository.PostSourceOccurrenceRepository;
 import com.techloghub.api.content.repository.SourceBlogRepository;
 import com.techloghub.api.worker.normalization.CanonicalFingerprintGenerator;
@@ -38,6 +42,8 @@ public class FeedCollectionPersistenceService {
 
 	private final SourceBlogRepository sourceBlogRepository;
 	private final ArchivedPostRepository archivedPostRepository;
+	private final AiSummaryRepository aiSummaryRepository;
+	private final FeedEntrySnapshotRepository feedEntrySnapshotRepository;
 	private final PostSourceOccurrenceRepository postSourceOccurrenceRepository;
 	private final CollectionRunRepository collectionRunRepository;
 	private final CanonicalFingerprintGenerator canonicalFingerprintGenerator;
@@ -82,12 +88,30 @@ public class FeedCollectionPersistenceService {
 				archivedPost = createArchivedPost(sourceBlog, candidate, fingerprint, finishedAt);
 				archivedPostsByFingerprint.put(fingerprint, archivedPost);
 				newPostCount++;
-				saveOccurrenceIfAbsent(archivedPost, sourceBlog, candidate, DuplicateType.ORIGINAL, existingOriginUrls);
+				saveOccurrenceAndSnapshotIfAbsent(
+					archivedPost,
+					sourceBlog,
+					collectionRun,
+					candidate,
+					fingerprint,
+					DuplicateType.ORIGINAL,
+					finishedAt,
+					existingOriginUrls
+				);
 				continue;
 			}
 
 			duplicateCount++;
-			saveOccurrenceIfAbsent(archivedPost, sourceBlog, candidate, DuplicateType.EXACT_DUPLICATE, existingOriginUrls);
+			saveOccurrenceAndSnapshotIfAbsent(
+				archivedPost,
+				sourceBlog,
+				collectionRun,
+				candidate,
+				fingerprint,
+				DuplicateType.EXACT_DUPLICATE,
+				finishedAt,
+				existingOriginUrls
+			);
 		}
 
 		sourceBlog.markCollectedAt(finishedAt);
@@ -128,14 +152,20 @@ public class FeedCollectionPersistenceService {
 			candidate.publishedAt(),
 			collectedAt
 		);
-		return archivedPostRepository.save(archivedPost);
+		archivedPost.publish();
+		ArchivedPost savedPost = archivedPostRepository.save(archivedPost);
+		aiSummaryRepository.save(AiSummary.pending(savedPost, 1));
+		return savedPost;
 	}
 
-	private void saveOccurrenceIfAbsent(
+	private void saveOccurrenceAndSnapshotIfAbsent(
 		ArchivedPost archivedPost,
 		SourceBlog sourceBlog,
+		CollectionRun collectionRun,
 		FeedEntryCandidate candidate,
+		String canonicalFingerprint,
 		DuplicateType duplicateType,
+		Instant collectedAt,
 		Set<String> existingOriginUrls
 	) {
 		if (existingOriginUrls.contains(candidate.originUrl())) {
@@ -145,6 +175,19 @@ public class FeedCollectionPersistenceService {
 			? PostSourceOccurrence.original(archivedPost, sourceBlog, candidate.originUrl(), candidate.publishedAt())
 			: PostSourceOccurrence.duplicate(archivedPost, sourceBlog, candidate.originUrl(), candidate.publishedAt(), duplicateType);
 		postSourceOccurrenceRepository.save(occurrence);
+		feedEntrySnapshotRepository.save(FeedEntrySnapshot.create(
+			archivedPost,
+			sourceBlog,
+			collectionRun,
+			candidate.title(),
+			candidate.originUrl(),
+			candidate.canonicalUrl(),
+			canonicalFingerprint,
+			candidate.publishedAt(),
+			collectedAt,
+			candidate.summaryText(),
+			duplicateType
+		));
 		existingOriginUrls.add(candidate.originUrl());
 	}
 

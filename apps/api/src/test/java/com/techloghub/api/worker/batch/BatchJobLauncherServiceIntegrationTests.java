@@ -28,9 +28,12 @@ import com.techloghub.api.TechlogHubApiApplication;
 import com.techloghub.api.content.domain.Company;
 import com.techloghub.api.content.domain.SourceBlog;
 import com.techloghub.api.content.domain.SourceType;
+import com.techloghub.api.content.domain.VisibilityState;
+import com.techloghub.api.content.repository.AiSummaryRepository;
 import com.techloghub.api.content.repository.ArchivedPostRepository;
 import com.techloghub.api.content.repository.CollectionRunRepository;
 import com.techloghub.api.content.repository.CompanyRepository;
+import com.techloghub.api.content.repository.FeedEntrySnapshotRepository;
 import com.techloghub.api.content.repository.PostSourceOccurrenceRepository;
 import com.techloghub.api.content.repository.SourceBlogRepository;
 import com.techloghub.api.worker.collection.FeedClient;
@@ -71,6 +74,12 @@ class BatchJobLauncherServiceIntegrationTests {
 	private ArchivedPostRepository archivedPostRepository;
 
 	@Autowired
+	private AiSummaryRepository aiSummaryRepository;
+
+	@Autowired
+	private FeedEntrySnapshotRepository feedEntrySnapshotRepository;
+
+	@Autowired
 	private PostSourceOccurrenceRepository postSourceOccurrenceRepository;
 
 	@Autowired
@@ -87,7 +96,9 @@ class BatchJobLauncherServiceIntegrationTests {
 	}
 
 	private void clearData() {
+		feedEntrySnapshotRepository.deleteAll();
 		collectionRunRepository.deleteAll();
+		aiSummaryRepository.deleteAll();
 		postSourceOccurrenceRepository.deleteAll();
 		archivedPostRepository.deleteAll();
 		sourceBlogRepository.deleteAll();
@@ -112,6 +123,11 @@ class BatchJobLauncherServiceIntegrationTests {
 
 		assertThat(completedJobExecution.getStatus()).isEqualTo(BatchStatus.COMPLETED);
 		assertThat(archivedPostRepository.count()).isEqualTo(1);
+		assertThat(archivedPostRepository.findAll()).allSatisfy(post -> {
+			assertThat(post.getVisibilityState()).isEqualTo(VisibilityState.PUBLISHED);
+			assertThat(aiSummaryRepository.findByArchivedPost_IdAndCurrentTrue(post.getId())).isPresent();
+		});
+		assertThat(feedEntrySnapshotRepository.count()).isEqualTo(1);
 		assertThat(collectionRunRepository.count()).isEqualTo(1);
 	}
 

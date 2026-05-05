@@ -26,7 +26,7 @@ public class TechlogBatchProperties {
 	private String collectCron = "0 */30 * * * *";
 
 	@Min(1)
-	private int maxEntriesPerSource = 50;
+	private int maxEntriesPerSource = 100;
 
 	@Min(1024)
 	private int maxFeedResponseBytes = 2_097_152;
