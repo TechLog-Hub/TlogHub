@@ -21,8 +21,19 @@ type AdminCollectionRunButtonProps = {
 const jobRunErrorMessages: Record<string, string> = {
   ADMIN_BATCH_JOB_ALREADY_RUNNING: "이미 수집 작업이 실행 중입니다. 잠시 후 다시 시도해 주세요.",
   ADMIN_BATCH_JOB_LAUNCH_FAILED: "수집 작업을 시작하지 못했습니다. 서버 상태를 확인해 주세요.",
+  ADMIN_BATCH_JOB_NOT_FOUND: "작업 실행 정보를 찾지 못했습니다. 작업 목록을 새로고침해 주세요.",
   ADMIN_SESSION_INVALID: "관리자 세션이 만료되었습니다. 다시 로그인해 주세요.",
 };
+
+const terminalJobStatuses = new Set<AdminJobRunDto["status"]>([
+  "completed",
+  "failed",
+  "stopped",
+  "abandoned",
+]);
+
+const jobStatusPollIntervalMs = 1_000;
+const jobStatusPollMaxAttempts = 30;
 
 export function AdminCollectionRunButton({
   sourceId,
@@ -59,7 +70,9 @@ export function AdminCollectionRunButton({
         return;
       }
 
-      setResult(payload as AdminJobRunDto);
+      const acceptedResult = payload as AdminJobRunDto;
+      setResult(acceptedResult);
+      setResult(await pollJobExecution(acceptedResult));
       router.refresh();
     });
   }
@@ -92,4 +105,33 @@ export function AdminCollectionRunButton({
       ) : null}
     </div>
   );
+}
+
+async function pollJobExecution(initialResult: AdminJobRunDto): Promise<AdminJobRunDto> {
+  let latestResult = initialResult;
+
+  for (let attempt = 0; attempt < jobStatusPollMaxAttempts; attempt++) {
+    if (terminalJobStatuses.has(latestResult.status)) {
+      return latestResult;
+    }
+
+    await delay(jobStatusPollIntervalMs);
+    const response = await fetch(`/admin/api/jobs/executions/${latestResult.executionId}`, {
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      return latestResult;
+    }
+
+    latestResult = (await response.json()) as AdminJobRunDto;
+  }
+
+  return latestResult;
+}
+
+function delay(ms: number) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 }

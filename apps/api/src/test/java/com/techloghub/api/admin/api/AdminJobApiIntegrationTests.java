@@ -42,9 +42,13 @@ import com.techloghub.api.content.domain.CollectionRunStatus;
 import com.techloghub.api.content.domain.Company;
 import com.techloghub.api.content.domain.SourceBlog;
 import com.techloghub.api.content.domain.SourceType;
+import com.techloghub.api.content.domain.SummaryState;
+import com.techloghub.api.content.domain.VisibilityState;
+import com.techloghub.api.content.repository.AiSummaryRepository;
 import com.techloghub.api.content.repository.ArchivedPostRepository;
 import com.techloghub.api.content.repository.CollectionRunRepository;
 import com.techloghub.api.content.repository.CompanyRepository;
+import com.techloghub.api.content.repository.FeedEntrySnapshotRepository;
 import com.techloghub.api.content.repository.PostSourceOccurrenceRepository;
 import com.techloghub.api.content.repository.SourceBlogRepository;
 import com.techloghub.api.worker.collection.FeedClient;
@@ -97,6 +101,12 @@ class AdminJobApiIntegrationTests {
 	private ArchivedPostRepository archivedPostRepository;
 
 	@Autowired
+	private AiSummaryRepository aiSummaryRepository;
+
+	@Autowired
+	private FeedEntrySnapshotRepository feedEntrySnapshotRepository;
+
+	@Autowired
 	private PostSourceOccurrenceRepository postSourceOccurrenceRepository;
 
 	@Autowired
@@ -115,7 +125,9 @@ class AdminJobApiIntegrationTests {
 	private void clearData() {
 		adminAuditLogRepository.deleteAll();
 		adminUserRepository.deleteAll();
+		feedEntrySnapshotRepository.deleteAll();
 		collectionRunRepository.deleteAll();
+		aiSummaryRepository.deleteAll();
 		postSourceOccurrenceRepository.deleteAll();
 		archivedPostRepository.deleteAll();
 		sourceBlogRepository.deleteAll();
@@ -152,9 +164,22 @@ class AdminJobApiIntegrationTests {
 			.andReturn()
 			.getResponse()
 			.getContentAsString();
-		awaitCompletion(readLong(runResponse, "executionId"));
+		Long executionId = readLong(runResponse, "executionId");
+		awaitCompletion(executionId);
+
+		mockMvc.perform(get("/api/v1/admin/jobs/executions/{executionId}", executionId)
+				.header(HttpHeaders.AUTHORIZATION, bearer(accessToken)))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.executionId").value(executionId))
+			.andExpect(jsonPath("$.status").value("completed"));
 
 		assertThat(archivedPostRepository.count()).isEqualTo(1);
+		assertThat(feedEntrySnapshotRepository.count()).isEqualTo(1);
+		assertThat(archivedPostRepository.findAll()).allSatisfy(post -> {
+			assertThat(post.getVisibilityState()).isEqualTo(VisibilityState.PUBLISHED);
+			assertThat(aiSummaryRepository.findByArchivedPost_IdAndCurrentTrue(post.getId()))
+				.hasValueSatisfying(summary -> assertThat(summary.getSummaryState()).isEqualTo(SummaryState.PENDING));
+		});
 		assertThat(collectionRunRepository.findByStatusOrderByStartedAtAsc(CollectionRunStatus.SUCCESS)).hasSize(1);
 	}
 

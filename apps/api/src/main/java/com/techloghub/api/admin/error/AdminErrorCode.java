@@ -41,6 +41,11 @@ public enum AdminErrorCode implements ErrorCode {
 		HttpStatus.INTERNAL_SERVER_ERROR,
 		"ADMIN_BATCH_JOB_LAUNCH_FAILED",
 		"관리자 작업 실행에 실패했습니다."
+	),
+	ADMIN_BATCH_JOB_NOT_FOUND(
+		HttpStatus.NOT_FOUND,
+		"ADMIN_BATCH_JOB_NOT_FOUND",
+		"관리자 작업 실행 정보를 찾을 수 없습니다."
 	);
 
 	private final HttpStatus httpStatus;
