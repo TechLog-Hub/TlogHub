@@ -1,0 +1,12 @@
+**
+
+!apps/
+apps/**
+!apps/api/
+apps/api/**
+!apps/api/build/
+apps/api/build/**
+!apps/api/build/libs/
+apps/api/build/libs/**
+!apps/api/build/libs/*.jar
+!apps/api/Dockerfile

@@ -21,6 +21,11 @@ dist-ssr
 *.local
 *.tsbuildinfo
 
+# Deployment secrets
+deploy/**/.env
+deploy/**/.env.*
+!deploy/**/.env.example
+
 # Project documentation lives in GitHub Wiki.
 docs/
 review/
