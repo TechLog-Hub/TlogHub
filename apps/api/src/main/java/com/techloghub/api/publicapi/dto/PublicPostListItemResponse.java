@@ -13,6 +13,7 @@ import com.techloghub.api.content.repository.ArchivedPostListQueryDto;
  * @param slug 글 slug
  * @param title 글 제목
  * @param company 기업 요약
+ * @param sourceName 소스 블로그 이름
  * @param publishedAt 원문 게시 시각
  * @param jobCategories 직군 코드 목록
  * @param topicTags 주제 태그 slug 목록
@@ -25,6 +26,7 @@ public record PublicPostListItemResponse(
 	String slug,
 	String title,
 	PublicCompanySummaryResponse company,
+	String sourceName,
 	Instant publishedAt,
 	List<String> jobCategories,
 	List<String> topicTags,
@@ -49,6 +51,7 @@ public record PublicPostListItemResponse(
 			post.slug(),
 			post.title(),
 			PublicCompanySummaryResponse.of(post.companySlug(), post.companyNameKo()),
+			post.sourceBlogName(),
 			post.publishedAt(),
 			jobCategories,
 			topicTags,

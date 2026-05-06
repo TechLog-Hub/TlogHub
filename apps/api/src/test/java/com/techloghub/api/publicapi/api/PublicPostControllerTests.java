@@ -53,6 +53,7 @@ class PublicPostControllerTests {
 				"toss-spring",
 				"Spring 운영 경험",
 				new PublicCompanySummaryResponse("toss", "토스"),
+				"토스 기술 블로그",
 				Instant.parse("2026-05-02T01:00:00Z"),
 				List.of("Backend"),
 				List.of("spring"),
@@ -75,6 +76,7 @@ class PublicPostControllerTests {
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.content[0].slug").value("toss-spring"))
 			.andExpect(jsonPath("$.content[0].company.slug").value("toss"))
+			.andExpect(jsonPath("$.content[0].sourceName").value("토스 기술 블로그"))
 			.andExpect(jsonPath("$.page").value(0))
 			.andExpect(jsonPath("$.size").value(24))
 			.andExpect(jsonPath("$.totalElements").value(1));

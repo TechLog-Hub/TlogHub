@@ -18,6 +18,7 @@ class PublicApiResponseDtoTests {
 			"toss-spring",
 			"Spring 운영 경험",
 			PublicCompanySummaryResponse.of("toss", "토스"),
+			"토스 기술 블로그",
 			Instant.parse("2026-05-02T01:00:00Z"),
 			null,
 			null,
