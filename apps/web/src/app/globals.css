@@ -835,11 +835,13 @@ select {
   flex: 0 0 auto;
 }
 
-.home-search input[type="text"] {
+.home-search input {
+  appearance: none;
   width: 100%;
   min-width: 0;
   border: 0;
   outline: 0;
+  box-shadow: none;
   background: transparent;
   color: var(--public-text);
   font-size: 20px;
@@ -1233,6 +1235,14 @@ select {
 
 .sidebar-company-list strong {
   font-size: 14px;
+}
+
+.sidebar-empty {
+  margin: 0;
+  color: var(--public-subtle);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.6;
 }
 
 .sidebar-panel--subscribe {
@@ -2008,7 +2018,7 @@ select {
     padding-left: 18px;
   }
 
-  .home-search input[type="text"] {
+  .home-search input {
     font-size: 17px;
   }
 

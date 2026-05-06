@@ -12,7 +12,7 @@ export function PublicSearchBox({ query }: PublicSearchBoxProps) {
           <circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" strokeWidth="1.8" />
           <path d="M13 13l3.5 3.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
         </svg>
-        <input name="q" defaultValue={query.q ?? ""} placeholder="회사, 기술, 글 제목 검색" aria-label="검색어" />
+        <input type="text" name="q" defaultValue={query.q ?? ""} placeholder="회사, 기술, 글 제목 검색" aria-label="검색어" />
         <button type="submit">검색</button>
       </form>
     </section>

@@ -96,29 +96,37 @@ export function PublicSidebar({
     <aside className="public-sidebar" aria-label="보조 탐색 정보">
       <section className="sidebar-panel">
         <h2>오늘 많이 본 태그</h2>
-        <ol className="sidebar-rank-list">
-          {tags.map((tag, index) => (
-            <li key={tag.slug}>
-              <Link href={`/?tag=${encodeURIComponent(tag.slug)}`}>
-                <span>{index + 1}</span>
-                <strong>{tag.label}</strong>
-                <em>글 {tag.count}</em>
-              </Link>
-            </li>
-          ))}
-        </ol>
+        {tags.length > 0 ? (
+          <ol className="sidebar-rank-list">
+            {tags.map((tag, index) => (
+              <li key={tag.slug}>
+                <Link href={`/?tag=${encodeURIComponent(tag.slug)}`}>
+                  <span>{index + 1}</span>
+                  <strong>{tag.label}</strong>
+                  <em>글 {tag.count}</em>
+                </Link>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p className="sidebar-empty">아직 집계된 태그가 없습니다.</p>
+        )}
       </section>
 
       <section className="sidebar-panel">
         <h2>자주 업데이트된 기업</h2>
-        <div className="sidebar-company-list">
-          {companies.map((company) => (
-            <Link key={company.slug} href={`/?company=${encodeURIComponent(company.slug)}`}>
-              <strong>{company.name}</strong>
-              <span>아카이브 글 {company.count}개</span>
-            </Link>
-          ))}
-        </div>
+        {companies.length > 0 ? (
+          <div className="sidebar-company-list">
+            {companies.map((company) => (
+              <Link key={company.slug} href={`/?company=${encodeURIComponent(company.slug)}`}>
+                <strong>{company.name}</strong>
+                <span>아카이브 글 {company.count}개</span>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <p className="sidebar-empty">아직 집계된 기업이 없습니다.</p>
+        )}
       </section>
 
       <section className="sidebar-panel sidebar-panel--subscribe">
