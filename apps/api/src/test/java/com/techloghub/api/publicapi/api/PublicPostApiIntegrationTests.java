@@ -116,6 +116,7 @@ class PublicPostApiIntegrationTests {
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.content.length()").value(1))
 			.andExpect(jsonPath("$.content[0].slug").value("toss-public-spring"))
+			.andExpect(jsonPath("$.content[0].sourceName").value("토스 기술 블로그"))
 			.andExpect(jsonPath("$.content[0].summaryPreview").value("Spring 운영 경험 요약"));
 
 		mockMvc.perform(get("/api/v1/public/posts/toss-public-spring"))
