@@ -18,3 +18,7 @@ gradlew text eol=lf
 *.sql text eol=lf
 *.sh text eol=lf
 *.mjs text eol=lf
+Dockerfile text eol=lf
+**/Dockerfile text eol=lf
+.dockerignore text eol=lf
+*.env.example text eol=lf
